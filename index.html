@@ -159,7 +159,6 @@
       margin-top: 10px;
     }
     .admin-actions button { flex: 1; padding: 5px; font-size: 0.85rem; }
-    .toggle-auth { color: #007bff; cursor: pointer; text-decoration: underline; font-size: 0.9rem; margin-top: 10px; display: inline-block; }
   </style>
 </head>
 <body>
@@ -214,7 +213,7 @@
         </div>
         <div class="form-group">
           <label>Notas opcionales:</label>
-          <textarea id="cust-notes" rows="2" placeholder="Ej: Timbre 2B, o sin mayonesa"></textarea>
+          <textarea id="cust-notes" rows="2" placeholder="Ej: Timbre 2B, o aclaraciones sobre el pedido"></textarea>
         </div>
         <button type="submit" class="btn-whatsapp">📲 Enviar Pedido a WhatsApp</button>
       </form>
@@ -225,19 +224,21 @@
   <div class="modal" id="login-modal">
     <div class="modal-content">
       <span class="close-modal" id="close-login">&times;</span>
-      <h2 id="auth-title">Iniciar Sesión</h2>
+      <h2>Acceso al Panel</h2>
       <form id="auth-form">
         <div class="form-group">
-          <label>Email:</label>
+          <label>Email autorizable:</label>
           <input type="email" id="auth-email" placeholder="tu@email.com" required>
         </div>
         <div class="form-group">
           <label>Contraseña:</label>
           <input type="password" id="auth-password" placeholder="••••••••" required>
         </div>
-        <button type="submit" class="btn-add" id="auth-submit-btn">Ingresar</button>
+        <div style="display: flex; gap: 10px; margin-top: 15px;">
+          <button type="submit" id="btn-login-direct" class="btn-add" style="flex:1;">Iniciar Sesión</button>
+          <button type="button" id="btn-register-direct" class="btn-edit" style="flex:1;">Crear Cuenta</button>
+        </div>
       </form>
-      <span class="toggle-auth" id="toggle-auth-mode">¿No tenés cuenta? Regístrate acá</span>
     </div>
   </div>
 
@@ -308,21 +309,20 @@
     } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     // 1. CONFIGURACIÓN FIREBASE
-// 1. CONFIGURACIÓN FIREBASE (Pegá acá tus claves reales)
     const firebaseConfig = {
-      apiKey: "AIzaSyD_AQUÍ_HABRÁ_MUCHAS_LETRAS_Y_NÚMEROS",
-      authDomain: "tu-tienda.firebaseapp.com",
-      projectId: "tu-tienda",
-      storageBucket: "tu-tienda.appspot.com",
-      messagingSenderId: "123456789",
-      appId: "1:123456789:web:abc123def456"
+      apiKey: "COLOCAR_ACÁ_TU_API_KEY",
+      authDomain: "maria-elena-mendoza.firebaseapp.com",
+      projectId: "maria-elena-mendoza",
+      storageBucket: "maria-elena-mendoza.appspot.com",
+      messagingSenderId: "1032829032543",
+      appId: "1:1032829032543:web:53a6eb6401657c917ee7b8"
     };
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    // 2. WHITELIST
+    // 2. WHITELIST HARCODEDA
     const WHITELIST = {
       "mariaelenamendoza@hotmail.com": { rol: "dueño", nombre: "María Elena" },
       "matytorres1997@gmail.com": { rol: "empleado", nombre: "Matias" },
@@ -332,7 +332,6 @@
     // Estado global
     let currentUser = null;
     let currentUserData = null;
-    let isRegisterMode = false;
     let products = [];
     let cart = [];
 
@@ -389,37 +388,45 @@
       renderProducts();
     });
 
-    // LOGIN & REGISTRO
-    const authForm = document.getElementById('auth-form');
-    const toggleAuthModeBtn = document.getElementById('toggle-auth-mode');
-
-    toggleAuthModeBtn.addEventListener('click', () => {
-      isRegisterMode = !isRegisterMode;
-      document.getElementById('auth-title').textContent = isRegisterMode ? 'Crear Cuenta' : 'Iniciar Sesión';
-      document.getElementById('auth-submit-btn').textContent = isRegisterMode ? 'Registrarse' : 'Ingresar';
-      toggleAuthModeBtn.textContent = isRegisterMode ? '¿Ya tenés cuenta? Inicia sesión' : '¿No tenés cuenta? Regístrate acá';
-    });
-
-    authForm.addEventListener('submit', async (e) => {
+    // INICIAR SESIÓN DIRECTO
+    document.getElementById('auth-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const email = document.getElementById('auth-email').value.trim().toLowerCase();
       const password = document.getElementById('auth-password').value;
 
       if (!verificarWhitelistLocal(email)) {
-        return alert("⛔ Acceso bloqueado: Tu correo (" + email + ") no tiene permisos asignados.");
+        return alert("⛔ Acceso bloqueado: Tu correo no tiene permisos asignados.");
       }
 
       try {
-        if (isRegisterMode) {
-          await createUserWithEmailAndPassword(auth, email, password);
-          alert('¡Cuenta creada e iniciada con éxito!');
-        } else {
-          await signInWithEmailAndPassword(auth, email, password);
-        }
+        await signInWithEmailAndPassword(auth, email, password);
         document.getElementById('login-modal').style.display = 'none';
-        authForm.reset();
+        document.getElementById('auth-form').reset();
       } catch (error) {
-        alert('Error: ' + error.message);
+        alert('Error al ingresar: ' + error.message);
+      }
+    });
+
+    // REGISTRAR CUENTA DIRECTO
+    document.getElementById('btn-register-direct').addEventListener('click', async () => {
+      const email = document.getElementById('auth-email').value.trim().toLowerCase();
+      const password = document.getElementById('auth-password').value;
+
+      if (!email || !password) {
+        return alert("Por favor ingresá tu email y una contraseña para registrarte.");
+      }
+
+      if (!verificarWhitelistLocal(email)) {
+        return alert("⛔ Acceso bloqueado: Tu correo no está en la lista autorizada.");
+      }
+
+      try {
+        await createUserWithEmailAndPassword(auth, email, password);
+        alert('¡Cuenta creada con éxito! Ya tenés acceso al panel.');
+        document.getElementById('login-modal').style.display = 'none';
+        document.getElementById('auth-form').reset();
+      } catch (error) {
+        alert('Error al registrar cuenta: ' + error.message);
       }
     });
 
@@ -459,7 +466,7 @@
         }
 
         card.innerHTML = `
-          <img src="${product.image || 'https://via.placeholder.com/150'}" alt="${product.name}">
+          <img src="${product.image || 'https://via.placeholder.com/150'}" alt="${product.name}" onerror="this.src='https://via.placeholder.com/150'">
           <div class="product-title">${product.name}</div>
           <div class="product-price">$${product.price}</div>
           <button class="btn-add" data-add="${product.id}">Agregar al Carrito</button>
@@ -557,7 +564,7 @@
       checkoutModal.style.display = 'none';
     });
 
-    // ABM PRODUCTOS EN FIRESTORE (Solo autenticados)
+    // ABM PRODUCTOS EN FIRESTORE
     document.getElementById('product-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       if (!currentUser) return alert('Debes iniciar sesión.');
@@ -572,7 +579,7 @@
         alert('Producto guardado en Firestore.');
         document.getElementById('product-form').reset();
         document.getElementById('prod-id').value = '';
-        adminModal.style.display = 'none';
+        document.getElementById('admin-modal').style.display = 'none';
       } catch (error) {
         alert('Error al guardar el producto: ' + error.message);
       }
@@ -585,7 +592,7 @@
         document.getElementById('prod-name').value = prod.name;
         document.getElementById('prod-price').value = prod.price;
         document.getElementById('prod-image').value = prod.image || '';
-        adminModal.style.display = 'flex';
+        document.getElementById('admin-modal').style.display = 'flex';
       }
     }
 
