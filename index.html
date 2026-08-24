@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mi Tienda + Whitelist + Firestore Pro</title>
+  <title>Mi Tienda + Whitelist + Storage Pro</title>
   <style>
     :root {
       --bg-color: #f4f6f8;
@@ -42,7 +42,7 @@
     }
 
     .brand { display: flex; align-items: center; gap: 10px; }
-    .brand img { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
+    .brand img { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border-color); }
     .controls { display: flex; gap: 10px; align-items: center; }
 
     button {
@@ -165,7 +165,7 @@
 
   <header>
     <div class="brand">
-      <img id="store-logo" src="https://via.placeholder.com/40" alt="Logo">
+      <img id="store-logo" src="https://via.placeholder.com/45" alt="Logo">
       <h1 id="store-name">Mi Tienda</h1>
     </div>
     <div class="controls">
@@ -257,10 +257,20 @@
         <label>Nombre del Local:</label>
         <input type="text" id="cfg-name">
       </div>
+
+      <!-- SECCIÓN PARA ELEGIR LOGO DESDE GALERÍA O URL -->
       <div class="form-group">
-        <label>URL del Logo:</label>
-        <input type="text" id="cfg-logo">
+        <label>Logo del Local:</label>
+        <div style="margin-bottom: 8px;">
+          <small>📁 Subir desde Galería/Archivos:</small>
+          <input type="file" id="cfg-logo-file" accept="image/*">
+        </div>
+        <div>
+          <small>🔗 O pegar URL de imagen:</small>
+          <input type="text" id="cfg-logo" placeholder="https://ejemplo.com/logo.png">
+        </div>
       </div>
+
       <div class="form-group">
         <label>WhatsApp (con código de país):</label>
         <input type="text" id="cfg-whatsapp">
@@ -307,6 +317,12 @@
       setDoc, 
       deleteDoc 
     } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { 
+      getStorage, 
+      ref, 
+      uploadBytes, 
+      getDownloadURL 
+    } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
     // 1. CONFIGURACIÓN FIREBASE
     const firebaseConfig = {
@@ -321,15 +337,15 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
+    const storage = getStorage(app);
 
-    // 2. WHITELIST HARCODEDA
+    // 2. WHITELIST
     const WHITELIST = {
       "mariaelenamendoza@hotmail.com": { rol: "dueño", nombre: "María Elena" },
       "matytorres1997@gmail.com": { rol: "empleado", nombre: "Matias" },
       "elflacotorres75@gmail.com": { rol: "empleado", nombre: "Flaco Torres" }
     };
 
-    // Estado global
     let currentUser = null;
     let currentUserData = null;
     let products = [];
@@ -338,7 +354,7 @@
     let storeConfig = JSON.parse(localStorage.getItem('storeConfig')) || {
       name: "Mi Tienda Express",
       whatsappNumber: "5491123456789",
-      logoUrl: "https://via.placeholder.com/40"
+      logoUrl: "https://via.placeholder.com/45"
     };
 
     function verificarWhitelistLocal(email) {
@@ -346,7 +362,6 @@
       return WHITELIST[email.trim().toLowerCase()] || null;
     }
 
-    // LISTENER FIRESTORE EN TIEMPO REAL PARA PRODUCTOS
     function initProductsListener() {
       const prodsRef = collection(db, "productos");
       onSnapshot(prodsRef, (snapshot) => {
@@ -360,7 +375,6 @@
       });
     }
 
-    // AUTENTICACIÓN
     onAuthStateChanged(auth, async (user) => {
       const openAdminBtn = document.getElementById('open-admin-btn');
 
@@ -388,7 +402,6 @@
       renderProducts();
     });
 
-    // INICIAR SESIÓN DIRECTO
     document.getElementById('auth-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const email = document.getElementById('auth-email').value.trim().toLowerCase();
@@ -407,7 +420,6 @@
       }
     });
 
-    // REGISTRAR CUENTA DIRECTO
     document.getElementById('btn-register-direct').addEventListener('click', async () => {
       const email = document.getElementById('auth-email').value.trim().toLowerCase();
       const password = document.getElementById('auth-password').value;
@@ -435,7 +447,6 @@
       document.getElementById('admin-modal').style.display = 'none';
     });
 
-    // RENDERIZADO DE INTERFAZ
     function init() {
       document.getElementById('store-name').textContent = storeConfig.name;
       document.getElementById('store-logo').src = storeConfig.logoUrl;
@@ -486,7 +497,6 @@
       });
     }
 
-    // CARRITO
     function addToCart(productId) {
       const itemInCart = cart.find(item => item.id === productId);
       if (itemInCart) {
@@ -525,7 +535,6 @@
       totalContainer.textContent = `Total: $${total}`;
     }
 
-    // CHECKOUT CLIENTE & WHATSAPP
     const checkoutModal = document.getElementById('checkout-modal');
 
     document.getElementById('open-checkout-btn').addEventListener('click', () => {
@@ -564,7 +573,6 @@
       checkoutModal.style.display = 'none';
     });
 
-    // ABM PRODUCTOS EN FIRESTORE
     document.getElementById('product-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       if (!currentUser) return alert('Debes iniciar sesión.');
@@ -607,7 +615,6 @@
       }
     }
 
-    // MODALES Y CONFIGURACIÓN
     const loginModal = document.getElementById('login-modal');
     const adminModal = document.getElementById('admin-modal');
 
@@ -625,7 +632,6 @@
     document.getElementById('close-login').onclick = () => loginModal.style.display = 'none';
     document.getElementById('close-admin').onclick = () => adminModal.style.display = 'none';
 
-    // MODO OSCURO
     document.getElementById('theme-toggle').addEventListener('click', () => {
       const isDark = document.body.getAttribute('data-theme') === 'dark';
       if (isDark) {
@@ -637,13 +643,40 @@
       }
     });
 
-    document.getElementById('save-cfg-btn').addEventListener('click', () => {
-      storeConfig.name = document.getElementById('cfg-name').value;
-      storeConfig.logoUrl = document.getElementById('cfg-logo').value;
-      storeConfig.whatsappNumber = document.getElementById('cfg-whatsapp').value;
-      localStorage.setItem('storeConfig', JSON.stringify(storeConfig));
-      init();
-      alert('Configuración guardada.');
+    // GUARDAR CONFIGURACIÓN CON SUBIDA DE LOGO DESDE GALERÍA
+    document.getElementById('save-cfg-btn').addEventListener('click', async () => {
+      const saveBtn = document.getElementById('save-cfg-btn');
+      const fileInput = document.getElementById('cfg-logo-file');
+      const urlInput = document.getElementById('cfg-logo');
+
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'Guardando...';
+
+      try {
+        let logoFinalUrl = urlInput.value.trim();
+
+        // Si se seleccionó una imagen desde la galería
+        if (fileInput.files.length > 0) {
+          const file = fileInput.files[0];
+          const storageRef = ref(storage, 'logo/' + Date.now() + '_' + file.name);
+          await uploadBytes(storageRef, file);
+          logoFinalUrl = await getDownloadURL(storageRef);
+        }
+
+        storeConfig.name = document.getElementById('cfg-name').value;
+        storeConfig.logoUrl = logoFinalUrl || "https://via.placeholder.com/45";
+        storeConfig.whatsappNumber = document.getElementById('cfg-whatsapp').value;
+
+        localStorage.setItem('storeConfig', JSON.stringify(storeConfig));
+        init();
+        alert('Configuración guardada con éxito.');
+        adminModal.style.display = 'none';
+      } catch (error) {
+        alert('Error al guardar la configuración: ' + error.message);
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Guardar Configuración';
+      }
     });
 
     init();
