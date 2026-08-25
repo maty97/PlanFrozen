@@ -368,7 +368,6 @@
       logoUrl: "https://via.placeholder.com/45"
     };
 
-    // Función auxiliar para compresión rápida
     async function compressImageFile(file, maxDim = 400) {
       const bitmap = await createImageBitmap(file);
       let w = bitmap.width, h = bitmap.height;
@@ -389,13 +388,14 @@
       return WHITELIST[email.trim().toLowerCase()] || null;
     }
 
-    // CARGAR CONFIGURACIÓN GLOBAL DESDE FIRESTORE
     function initStoreConfigListener() {
       onSnapshot(doc(db, "configuracion", "general"), (docSnap) => {
         if (docSnap.exists()) {
           storeConfig = docSnap.data();
           document.getElementById('store-name').textContent = storeConfig.name || "Plan Frozen";
-          document.getElementById('store-logo').src = storeConfig.logoUrl || "https://via.placeholder.com/45";
+          if (storeConfig.logoUrl) {
+            document.getElementById('store-logo').src = storeConfig.logoUrl;
+          }
         }
       }, (error) => {
         console.error("Error al obtener la configuración global:", error);
@@ -612,7 +612,7 @@
       checkoutModal.style.display = 'none';
     });
 
-    // 1. GUARDAR PRODUCTO (PERSISTENCIA INMEDIATA + SUBIDA EN SEGUNDO PLANO)
+    // PRODUCTOS
     document.getElementById('product-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       if (!currentUser) return alert('Debes iniciar sesión.');
@@ -623,19 +623,15 @@
       const urlInput = document.getElementById('prod-image').value.trim();
       const fileInput = document.getElementById('prod-image-file');
 
-      // Buscar si el producto ya existía para mantener su imagen si no se selecciona una nueva
       const existingProduct = products.find(p => p.id === id);
       let initialImageUrl = urlInput || (existingProduct ? existingProduct.image : 'https://via.placeholder.com/150');
 
-      // Cierra el modal e interviene inmediatamente
       document.getElementById('admin-modal').style.display = 'none';
       document.getElementById('product-form').reset();
 
       try {
-        // Guardado inmediato en Firestore (permite ver los cambios en todos los dispositivos al instante)
         await setDoc(doc(db, "productos", id), { name, price, image: initialImageUrl });
 
-        // Si hay un archivo adjunto, procesarlo y subirlo a Storage en segundo plano
         if (fileInput.files.length > 0) {
           const file = fileInput.files[0];
           (async () => {
@@ -645,7 +641,6 @@
               await uploadBytes(storageRef, compressedBlob);
               const finalStorageUrl = await getDownloadURL(storageRef);
 
-              // Reemplaza la URL final en Firestore
               await updateDoc(doc(db, "productos", id), { image: finalStorageUrl });
             } catch (storageErr) {
               console.error("Error al subir la imagen a Storage:", storageErr);
@@ -708,47 +703,54 @@
       }
     });
 
-    // 2. GUARDAR CONFIGURACIÓN (PERSISTENCIA INMEDIATA + SUBIDA EN SEGUNDO PLANO)
+    // 2. GUARDAR CONFIGURACIÓN (CORREGIDO PARA PERSISTIR LOGO DEFINITIVO)
     document.getElementById('save-cfg-btn').addEventListener('click', async () => {
       const fileInput = document.getElementById('cfg-logo-file');
       const urlInput = document.getElementById('cfg-logo');
 
       const nuevoNombre = document.getElementById('cfg-name').value;
       const nuevoWsp = document.getElementById('cfg-whatsapp').value;
-      let logoFinalUrl = urlInput.value.trim() || storeConfig.logoUrl;
+      const urlManual = urlInput.value.trim();
 
-      // Cierra el modal de inmediato
+      // Cierra el modal al instante
       document.getElementById('admin-modal').style.display = 'none';
 
       try {
-        // Guardado base en Firestore para persistir el nombre y WhatsApp inmediatamente
-        await setDoc(doc(db, "configuracion", "general"), {
+        // Actualizamos los campos de texto en Firestore manteniendo el logo actual si no hay una URL explícita nueva
+        const updateData = {
           name: nuevoNombre,
-          logoUrl: logoFinalUrl,
           whatsappNumber: nuevoWsp
-        });
+        };
 
-        // Subida de imagen a Storage en segundo plano
+        if (urlManual) {
+          updateData.logoUrl = urlManual;
+        }
+
+        // Se usa merge: true para no borrar la URL del logo existente mientras se sube el archivo
+        await setDoc(doc(db, "configuracion", "general"), updateData, { merge: true });
+
+        // Si hay archivo seleccionado, se sube primero y LUEGO se actualiza Firestore con la URL real de Storage
         if (fileInput.files.length > 0) {
           const file = fileInput.files[0];
           (async () => {
             try {
               const compressedBlob = await compressImageFile(file, 300);
               const storageRef = ref(storage, 'logo/logo_' + Date.now() + '.jpg');
+              
               await uploadBytes(storageRef, compressedBlob);
               const uploadedLogoUrl = await getDownloadURL(storageRef);
 
-              // Actualiza Firestore con la URL remota real
+              // Actualiza Firestore con la URL pública definitiva
               await updateDoc(doc(db, "configuracion", "general"), {
                 logoUrl: uploadedLogoUrl
               });
             } catch (err) {
-              console.error("Error subiendo el logo a Storage:", err);
+              console.error("Error subiendo el logo a Firebase Storage:", err);
             }
           })();
         }
       } catch (err) {
-        console.error("Error guardando la configuración:", err);
+        console.error("Error guardando la configuración en Firestore:", err);
       }
     });
 
