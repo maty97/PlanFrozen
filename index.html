@@ -595,14 +595,10 @@
       checkoutModal.style.display = 'none';
     });
 
-    // GUARDAR O EDITAR PRODUCTOS (CON COMPRESIÓN EXPRESS A WEBP)
+    // 1. GUARDAR PRODUCTO (INSTANTÁNEO Y ULTRA RÁPIDO EN SEGUNDO PLANO)
     document.getElementById('product-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       if (!currentUser) return alert('Debes iniciar sesión.');
-
-      const submitBtn = document.getElementById('prod-submit-btn');
-      submitBtn.disabled = true;
-      submitBtn.textContent = 'Guardando producto...';
 
       const id = document.getElementById('prod-id').value || Date.now().toString();
       const name = document.getElementById('prod-name').value;
@@ -610,48 +606,43 @@
       const urlInput = document.getElementById('prod-image').value.trim();
       const fileInput = document.getElementById('prod-image-file');
 
-      try {
-        let finalImageUrl = urlInput;
+      let finalImageUrl = urlInput || 'https://via.placeholder.com/150';
 
-        if (fileInput.files.length > 0) {
-          const originalFile = fileInput.files[0];
+      // Cierra el modal de inmediato
+      document.getElementById('admin-modal').style.display = 'none';
+      document.getElementById('product-form').reset();
 
-          // Reducción express a WebP
-          const compressedBlob = await new Promise((resolve) => {
-            const img = new Image();
-            img.onload = () => {
-              const canvas = document.createElement('canvas');
-              const maxDim = 500;
-              let w = img.width, h = img.height;
-              if (w > maxDim || h > maxDim) {
-                if (w > h) { h = (h * maxDim) / w; w = maxDim; }
-                else { w = (w * maxDim) / h; h = maxDim; }
-              }
-              canvas.width = w;
-              canvas.height = h;
-              const ctx = canvas.getContext('2d');
-              ctx.drawImage(img, 0, 0, w, h);
-              canvas.toBlob((b) => resolve(b || originalFile), 'image/webp', 0.8);
-            };
-            img.src = URL.createObjectURL(originalFile);
-          });
+      // PROCESAR Y SUBIR EN SEGUNDO PLANO
+      (async () => {
+        try {
+          if (fileInput.files.length > 0) {
+            const file = fileInput.files[0];
+            const bitmap = await createImageBitmap(file);
+            const maxDim = 400;
+            let w = bitmap.width, h = bitmap.height;
+            if (w > maxDim || h > maxDim) {
+              if (w > h) { h = Math.round((h * maxDim) / w); w = maxDim; }
+              else { w = Math.round((w * maxDim) / h); h = maxDim; }
+            }
 
-          const storageRef = ref(storage, 'productos/prod_' + Date.now() + '.webp');
-          await uploadBytes(storageRef, compressedBlob);
-          finalImageUrl = await getDownloadURL(storageRef);
+            const canvas = document.createElement('canvas');
+            canvas.width = w;
+            canvas.height = h;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(bitmap, 0, 0, w, h);
+
+            const compressedBlob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.7));
+            
+            const storageRef = ref(storage, 'productos/prod_' + Date.now() + '.jpg');
+            await uploadBytes(storageRef, compressedBlob);
+            finalImageUrl = await getDownloadURL(storageRef);
+          }
+
+          await setDoc(doc(db, "productos", id), { name, price, image: finalImageUrl });
+        } catch (err) {
+          console.error("Error guardando producto:", err);
         }
-
-        await setDoc(doc(db, "productos", id), { name, price, image: finalImageUrl });
-        alert('Producto guardado correctamente.');
-        document.getElementById('product-form').reset();
-        document.getElementById('prod-id').value = '';
-        document.getElementById('admin-modal').style.display = 'none';
-      } catch (error) {
-        alert('Error al guardar el producto: ' + error.message);
-      } finally {
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Guardar Producto';
-      }
+      })();
     });
 
     function editProduct(id) {
@@ -705,67 +696,67 @@
       }
     });
 
-    // GUARDAR CONFIGURACIÓN GENERAL CON SUBIDA ULTRA-RÁPIDA Y ACTUALIZACIÓN INSTANTÁNEA
+    // 2. GUARDAR CONFIGURACIÓN (INSTANTÁNEO Y ULTRA RÁPIDO EN SEGUNDO PLANO)
     document.getElementById('save-cfg-btn').addEventListener('click', async () => {
       const saveBtn = document.getElementById('save-cfg-btn');
       const fileInput = document.getElementById('cfg-logo-file');
       const urlInput = document.getElementById('cfg-logo');
 
-      saveBtn.disabled = true;
-      saveBtn.textContent = 'Guardando...';
+      const nuevoNombre = document.getElementById('cfg-name').value;
+      const nuevoWsp = document.getElementById('cfg-whatsapp').value;
+      let logoFinalUrl = urlInput.value.trim() || storeConfig.logoUrl;
 
-      try {
-        let logoFinalUrl = urlInput.value.trim() || storeConfig.logoUrl;
-
-        if (fileInput.files.length > 0) {
-          const originalFile = fileInput.files[0];
-
-          // Reducción express a WebP (ultra liviano, sube en menos de 1 segundo)
-          const compressedBlob = await new Promise((resolve) => {
-            const img = new Image();
-            img.onload = () => {
-              const canvas = document.createElement('canvas');
-              const maxDim = 400; // Máximo 400px para logo
-              let w = img.width, h = img.height;
-              if (w > maxDim || h > maxDim) {
-                if (w > h) { h = (h * maxDim) / w; w = maxDim; }
-                else { w = (w * maxDim) / h; h = maxDim; }
-              }
-              canvas.width = w;
-              canvas.height = h;
-              const ctx = canvas.getContext('2d');
-              ctx.drawImage(img, 0, 0, w, h);
-              canvas.toBlob((b) => resolve(b || originalFile), 'image/webp', 0.8);
-            };
-            img.src = URL.createObjectURL(originalFile);
-          });
-
-          // Subida ultra rápida a Storage
-          const storageRef = ref(storage, 'logo/logo_' + Date.now() + '.webp');
-          await uploadBytes(storageRef, compressedBlob);
-          logoFinalUrl = await getDownloadURL(storageRef);
-        }
-
-        const nuevaConfig = {
-          name: document.getElementById('cfg-name').value,
-          logoUrl: logoFinalUrl,
-          whatsappNumber: document.getElementById('cfg-whatsapp').value
-        };
-
-        // Actualizar visualmente AL INSTANTE
-        document.getElementById('store-name').textContent = nuevaConfig.name;
-        document.getElementById('store-logo').src = nuevaConfig.logoUrl;
-
-        // Guardar globalmente en Firestore en segundo plano
-        await setDoc(doc(db, "configuracion", "general"), nuevaConfig);
-
-        document.getElementById('admin-modal').style.display = 'none';
-      } catch (error) {
-        alert('Error al guardar: ' + error.message);
-      } finally {
-        saveBtn.disabled = false;
-        saveBtn.textContent = 'Guardar Configuración';
+      // A) FEEDBACK VISUAL INSTANTÁNEO EN LA PANTALLA
+      document.getElementById('store-name').textContent = nuevoNombre;
+      
+      if (fileInput.files.length > 0) {
+        const file = fileInput.files[0];
+        // Mostrar imagen local al instante sin esperar a la red
+        document.getElementById('store-logo').src = URL.createObjectURL(file);
+      } else if (urlInput.value.trim()) {
+        document.getElementById('store-logo').src = urlInput.value.trim();
       }
+
+      // Cierra el modal de inmediato
+      document.getElementById('admin-modal').style.display = 'none';
+
+      // B) PROCESAMIENTO Y SUBIDA EN SEGUNDO PLANO
+      (async () => {
+        try {
+          if (fileInput.files.length > 0) {
+            const file = fileInput.files[0];
+            
+            // Decodificación ultra-rápida por hardware
+            const bitmap = await createImageBitmap(file);
+            const maxDim = 300;
+            let w = bitmap.width, h = bitmap.height;
+            if (w > maxDim || h > maxDim) {
+              if (w > h) { h = Math.round((h * maxDim) / w); w = maxDim; }
+              else { w = Math.round((w * maxDim) / h); h = maxDim; }
+            }
+
+            const canvas = document.createElement('canvas');
+            canvas.width = w;
+            canvas.height = h;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(bitmap, 0, 0, w, h);
+
+            const compressedBlob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.7));
+            
+            const storageRef = ref(storage, 'logo/logo_' + Date.now() + '.jpg');
+            await uploadBytes(storageRef, compressedBlob);
+            logoFinalUrl = await getDownloadURL(storageRef);
+          }
+
+          await setDoc(doc(db, "configuracion", "general"), {
+            name: nuevoNombre,
+            logoUrl: logoFinalUrl,
+            whatsappNumber: nuevoWsp
+          });
+        } catch (err) {
+          console.error("Error subiendo configuración en segundo plano:", err);
+        }
+      })();
     });
 
     init();
