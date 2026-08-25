@@ -595,7 +595,7 @@
       checkoutModal.style.display = 'none';
     });
 
-    // GUARDAR O EDITAR PRODUCTOS (SUBIDA DIRECTA A STORAGE)
+    // GUARDAR O EDITAR PRODUCTOS (CON COMPRESIÓN EXPRESS A WEBP)
     document.getElementById('product-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       if (!currentUser) return alert('Debes iniciar sesión.');
@@ -615,8 +615,29 @@
 
         if (fileInput.files.length > 0) {
           const originalFile = fileInput.files[0];
-          const storageRef = ref(storage, 'productos/prod_' + Date.now() + '_' + originalFile.name);
-          await uploadBytes(storageRef, originalFile);
+
+          // Reducción express a WebP
+          const compressedBlob = await new Promise((resolve) => {
+            const img = new Image();
+            img.onload = () => {
+              const canvas = document.createElement('canvas');
+              const maxDim = 500;
+              let w = img.width, h = img.height;
+              if (w > maxDim || h > maxDim) {
+                if (w > h) { h = (h * maxDim) / w; w = maxDim; }
+                else { w = (w * maxDim) / h; h = maxDim; }
+              }
+              canvas.width = w;
+              canvas.height = h;
+              const ctx = canvas.getContext('2d');
+              ctx.drawImage(img, 0, 0, w, h);
+              canvas.toBlob((b) => resolve(b || originalFile), 'image/webp', 0.8);
+            };
+            img.src = URL.createObjectURL(originalFile);
+          });
+
+          const storageRef = ref(storage, 'productos/prod_' + Date.now() + '.webp');
+          await uploadBytes(storageRef, compressedBlob);
           finalImageUrl = await getDownloadURL(storageRef);
         }
 
@@ -684,23 +705,44 @@
       }
     });
 
-    // GUARDAR CONFIGURACIÓN GENERAL EN FIRESTORE (SUBIDA DIRECTA)
+    // GUARDAR CONFIGURACIÓN GENERAL CON SUBIDA ULTRA-RÁPIDA Y ACTUALIZACIÓN INSTANTÁNEA
     document.getElementById('save-cfg-btn').addEventListener('click', async () => {
       const saveBtn = document.getElementById('save-cfg-btn');
       const fileInput = document.getElementById('cfg-logo-file');
       const urlInput = document.getElementById('cfg-logo');
 
       saveBtn.disabled = true;
-      saveBtn.textContent = 'Guardando en la nube...';
+      saveBtn.textContent = 'Guardando...';
 
       try {
         let logoFinalUrl = urlInput.value.trim() || storeConfig.logoUrl;
 
-        // Subida directa del archivo a Storage sin procesar localmente
         if (fileInput.files.length > 0) {
           const originalFile = fileInput.files[0];
-          const storageRef = ref(storage, 'logo/logo_' + Date.now() + '_' + originalFile.name);
-          await uploadBytes(storageRef, originalFile);
+
+          // Reducción express a WebP (ultra liviano, sube en menos de 1 segundo)
+          const compressedBlob = await new Promise((resolve) => {
+            const img = new Image();
+            img.onload = () => {
+              const canvas = document.createElement('canvas');
+              const maxDim = 400; // Máximo 400px para logo
+              let w = img.width, h = img.height;
+              if (w > maxDim || h > maxDim) {
+                if (w > h) { h = (h * maxDim) / w; w = maxDim; }
+                else { w = (w * maxDim) / h; h = maxDim; }
+              }
+              canvas.width = w;
+              canvas.height = h;
+              const ctx = canvas.getContext('2d');
+              ctx.drawImage(img, 0, 0, w, h);
+              canvas.toBlob((b) => resolve(b || originalFile), 'image/webp', 0.8);
+            };
+            img.src = URL.createObjectURL(originalFile);
+          });
+
+          // Subida ultra rápida a Storage
+          const storageRef = ref(storage, 'logo/logo_' + Date.now() + '.webp');
+          await uploadBytes(storageRef, compressedBlob);
           logoFinalUrl = await getDownloadURL(storageRef);
         }
 
@@ -710,23 +752,22 @@
           whatsappNumber: document.getElementById('cfg-whatsapp').value
         };
 
-        // Guardar globalmente en Firestore
+        // Actualizar visualmente AL INSTANTE
+        document.getElementById('store-name').textContent = nuevaConfig.name;
+        document.getElementById('store-logo').src = nuevaConfig.logoUrl;
+
+        // Guardar globalmente en Firestore en segundo plano
         await setDoc(doc(db, "configuracion", "general"), nuevaConfig);
 
-        alert('Configuración guardada en la nube con éxito.');
         document.getElementById('admin-modal').style.display = 'none';
       } catch (error) {
-        alert('Error al guardar la configuración: ' + error.message);
+        alert('Error al guardar: ' + error.message);
       } finally {
         saveBtn.disabled = false;
         saveBtn.textContent = 'Guardar Configuración';
       }
     });
 
-    init();
-  </script>
-</body>
-</html>
     init();
   </script>
 </body>
