@@ -325,6 +325,7 @@
       onSnapshot, 
       doc, 
       setDoc, 
+      updateDoc,
       deleteDoc 
     } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
     import { 
@@ -366,6 +367,22 @@
       whatsappNumber: "5491123456789",
       logoUrl: "https://via.placeholder.com/45"
     };
+
+    // Función auxiliar para compresión rápida
+    async function compressImageFile(file, maxDim = 400) {
+      const bitmap = await createImageBitmap(file);
+      let w = bitmap.width, h = bitmap.height;
+      if (w > maxDim || h > maxDim) {
+        if (w > h) { h = Math.round((h * maxDim) / w); w = maxDim; }
+        else { w = Math.round((w * maxDim) / h); h = maxDim; }
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(bitmap, 0, 0, w, h);
+      return new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.7));
+    }
 
     function verificarWhitelistLocal(email) {
       if (!email) return null;
@@ -595,7 +612,7 @@
       checkoutModal.style.display = 'none';
     });
 
-    // 1. GUARDAR PRODUCTO (INSTANTÁNEO Y ULTRA RÁPIDO EN SEGUNDO PLANO)
+    // 1. GUARDAR PRODUCTO (PERSISTENCIA INMEDIATA + SUBIDA EN SEGUNDO PLANO)
     document.getElementById('product-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       if (!currentUser) return alert('Debes iniciar sesión.');
@@ -606,43 +623,38 @@
       const urlInput = document.getElementById('prod-image').value.trim();
       const fileInput = document.getElementById('prod-image-file');
 
-      let finalImageUrl = urlInput || 'https://via.placeholder.com/150';
+      // Buscar si el producto ya existía para mantener su imagen si no se selecciona una nueva
+      const existingProduct = products.find(p => p.id === id);
+      let initialImageUrl = urlInput || (existingProduct ? existingProduct.image : 'https://via.placeholder.com/150');
 
-      // Cierra el modal de inmediato
+      // Cierra el modal e interviene inmediatamente
       document.getElementById('admin-modal').style.display = 'none';
       document.getElementById('product-form').reset();
 
-      // PROCESAR Y SUBIR EN SEGUNDO PLANO
-      (async () => {
-        try {
-          if (fileInput.files.length > 0) {
-            const file = fileInput.files[0];
-            const bitmap = await createImageBitmap(file);
-            const maxDim = 400;
-            let w = bitmap.width, h = bitmap.height;
-            if (w > maxDim || h > maxDim) {
-              if (w > h) { h = Math.round((h * maxDim) / w); w = maxDim; }
-              else { w = Math.round((w * maxDim) / h); h = maxDim; }
+      try {
+        // Guardado inmediato en Firestore (permite ver los cambios en todos los dispositivos al instante)
+        await setDoc(doc(db, "productos", id), { name, price, image: initialImageUrl });
+
+        // Si hay un archivo adjunto, procesarlo y subirlo a Storage en segundo plano
+        if (fileInput.files.length > 0) {
+          const file = fileInput.files[0];
+          (async () => {
+            try {
+              const compressedBlob = await compressImageFile(file, 400);
+              const storageRef = ref(storage, 'productos/prod_' + Date.now() + '.jpg');
+              await uploadBytes(storageRef, compressedBlob);
+              const finalStorageUrl = await getDownloadURL(storageRef);
+
+              // Reemplaza la URL final en Firestore
+              await updateDoc(doc(db, "productos", id), { image: finalStorageUrl });
+            } catch (storageErr) {
+              console.error("Error al subir la imagen a Storage:", storageErr);
             }
-
-            const canvas = document.createElement('canvas');
-            canvas.width = w;
-            canvas.height = h;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(bitmap, 0, 0, w, h);
-
-            const compressedBlob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.7));
-            
-            const storageRef = ref(storage, 'productos/prod_' + Date.now() + '.jpg');
-            await uploadBytes(storageRef, compressedBlob);
-            finalImageUrl = await getDownloadURL(storageRef);
-          }
-
-          await setDoc(doc(db, "productos", id), { name, price, image: finalImageUrl });
-        } catch (err) {
-          console.error("Error guardando producto:", err);
+          })();
         }
-      })();
+      } catch (err) {
+        console.error("Error al guardar producto:", err);
+      }
     });
 
     function editProduct(id) {
@@ -696,9 +708,8 @@
       }
     });
 
-    // 2. GUARDAR CONFIGURACIÓN (INSTANTÁNEO Y ULTRA RÁPIDO EN SEGUNDO PLANO)
+    // 2. GUARDAR CONFIGURACIÓN (PERSISTENCIA INMEDIATA + SUBIDA EN SEGUNDO PLANO)
     document.getElementById('save-cfg-btn').addEventListener('click', async () => {
-      const saveBtn = document.getElementById('save-cfg-btn');
       const fileInput = document.getElementById('cfg-logo-file');
       const urlInput = document.getElementById('cfg-logo');
 
@@ -706,57 +717,39 @@
       const nuevoWsp = document.getElementById('cfg-whatsapp').value;
       let logoFinalUrl = urlInput.value.trim() || storeConfig.logoUrl;
 
-      // A) FEEDBACK VISUAL INSTANTÁNEO EN LA PANTALLA
-      document.getElementById('store-name').textContent = nuevoNombre;
-      
-      if (fileInput.files.length > 0) {
-        const file = fileInput.files[0];
-        // Mostrar imagen local al instante sin esperar a la red
-        document.getElementById('store-logo').src = URL.createObjectURL(file);
-      } else if (urlInput.value.trim()) {
-        document.getElementById('store-logo').src = urlInput.value.trim();
-      }
-
       // Cierra el modal de inmediato
       document.getElementById('admin-modal').style.display = 'none';
 
-      // B) PROCESAMIENTO Y SUBIDA EN SEGUNDO PLANO
-      (async () => {
-        try {
-          if (fileInput.files.length > 0) {
-            const file = fileInput.files[0];
-            
-            // Decodificación ultra-rápida por hardware
-            const bitmap = await createImageBitmap(file);
-            const maxDim = 300;
-            let w = bitmap.width, h = bitmap.height;
-            if (w > maxDim || h > maxDim) {
-              if (w > h) { h = Math.round((h * maxDim) / w); w = maxDim; }
-              else { w = Math.round((w * maxDim) / h); h = maxDim; }
+      try {
+        // Guardado base en Firestore para persistir el nombre y WhatsApp inmediatamente
+        await setDoc(doc(db, "configuracion", "general"), {
+          name: nuevoNombre,
+          logoUrl: logoFinalUrl,
+          whatsappNumber: nuevoWsp
+        });
+
+        // Subida de imagen a Storage en segundo plano
+        if (fileInput.files.length > 0) {
+          const file = fileInput.files[0];
+          (async () => {
+            try {
+              const compressedBlob = await compressImageFile(file, 300);
+              const storageRef = ref(storage, 'logo/logo_' + Date.now() + '.jpg');
+              await uploadBytes(storageRef, compressedBlob);
+              const uploadedLogoUrl = await getDownloadURL(storageRef);
+
+              // Actualiza Firestore con la URL remota real
+              await updateDoc(doc(db, "configuracion", "general"), {
+                logoUrl: uploadedLogoUrl
+              });
+            } catch (err) {
+              console.error("Error subiendo el logo a Storage:", err);
             }
-
-            const canvas = document.createElement('canvas');
-            canvas.width = w;
-            canvas.height = h;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(bitmap, 0, 0, w, h);
-
-            const compressedBlob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.7));
-            
-            const storageRef = ref(storage, 'logo/logo_' + Date.now() + '.jpg');
-            await uploadBytes(storageRef, compressedBlob);
-            logoFinalUrl = await getDownloadURL(storageRef);
-          }
-
-          await setDoc(doc(db, "configuracion", "general"), {
-            name: nuevoNombre,
-            logoUrl: logoFinalUrl,
-            whatsappNumber: nuevoWsp
-          });
-        } catch (err) {
-          console.error("Error subiendo configuración en segundo plano:", err);
+          })();
         }
-      })();
+      } catch (err) {
+        console.error("Error guardando la configuración:", err);
+      }
     });
 
     init();
