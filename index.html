@@ -166,7 +166,7 @@
 
   <header>
     <div class="brand">
-      <img id="store-logo" src="https://via.placeholder.com/45" alt="Logo">
+      <img id="store-logo" src="https://via.placeholder.com/45" alt="Logo" onerror="this.onerror=null; this.src='https://via.placeholder.com/45'; console.error('Error al cargar la imagen del logo desde la URL guardada.');">
       <h1 id="store-name">Plan Frozen</h1>
     </div>
     <div class="controls">
@@ -259,7 +259,6 @@
         <input type="text" id="cfg-name">
       </div>
 
-      <!-- SECCIÓN LOGO -->
       <div class="form-group">
         <label>Logo del Local:</label>
         <div style="margin-bottom: 8px;">
@@ -292,7 +291,6 @@
           <input type="number" id="prod-price" required>
         </div>
         
-        <!-- SECCIÓN IMAGEN DEL PRODUCTO -->
         <div class="form-group">
           <label>Imagen del Producto:</label>
           <div style="margin-bottom: 8px;">
@@ -326,7 +324,6 @@
       onSnapshot, 
       doc, 
       setDoc, 
-      updateDoc,
       deleteDoc 
     } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
     import { 
@@ -336,7 +333,6 @@
       getDownloadURL 
     } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
-    // 1. CONFIGURACIÓN FIREBASE
     const firebaseConfig = {
       apiKey: "AIzaSyBgeGRJYsMLz_QTvPz8TPHyRNCh8Wye6Kk",
       authDomain: "maria-elena-mendoza.firebaseapp.com",
@@ -351,7 +347,6 @@
     const db = getFirestore(app);
     const storage = getStorage(app);
 
-    // 2. WHITELIST
     const WHITELIST = {
       "mariaelenamendoza@hotmail.com": { rol: "dueño", nombre: "María Elena" },
       "matytorres1997@gmail.com": { rol: "empleado", nombre: "Matias" },
@@ -381,7 +376,7 @@
       canvas.height = h;
       const ctx = canvas.getContext('2d');
       ctx.drawImage(bitmap, 0, 0, w, h);
-      return new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.7));
+      return new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.8));
     }
 
     function verificarWhitelistLocal(email) {
@@ -399,7 +394,7 @@
           }
         }
       }, (error) => {
-        console.error("Error al obtener la configuración global:", error);
+        console.error("Error al escuchar la configuración global:", error);
       });
     }
 
@@ -613,7 +608,6 @@
       checkoutModal.style.display = 'none';
     });
 
-    // PRODUCTOS CON SUBIDA SINCRÓNICA
     document.getElementById('product-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       if (!currentUser) return alert('Debes iniciar sesión.');
@@ -704,7 +698,6 @@
       }
     });
 
-    // GUARDAR CONFIGURACIÓN GENERAL (SINCRÓNICO CON STORAGE + FIRESTORE)
     document.getElementById('save-cfg-btn').addEventListener('click', async () => {
       const saveBtn = document.getElementById('save-cfg-btn');
       const fileInput = document.getElementById('cfg-logo-file');
@@ -718,24 +711,21 @@
       saveBtn.textContent = '⏳ Subiendo logo y guardando...';
 
       try {
-        let logoFinalUrl = urlManual;
+        let logoFinalUrl = urlManual || storeConfig.logoUrl;
 
         if (fileInput.files.length > 0) {
           const file = fileInput.files[0];
           const compressedBlob = await compressImageFile(file, 300);
-          const storageRef = ref(storage, 'logo/logo_' + Date.now() + '.jpg');
+          const storageRef = ref(storage, 'logo/logo_tienda.jpg');
           const uploadSnapshot = await uploadBytes(storageRef, compressedBlob);
           logoFinalUrl = await getDownloadURL(uploadSnapshot.ref);
         }
 
         const updateData = {
           name: nuevoNombre,
-          whatsappNumber: nuevoWsp
+          whatsappNumber: nuevoWsp,
+          logoUrl: logoFinalUrl
         };
-
-        if (logoFinalUrl) {
-          updateData.logoUrl = logoFinalUrl;
-        }
 
         await setDoc(doc(db, "configuracion", "general"), updateData, { merge: true });
 
@@ -744,7 +734,7 @@
 
       } catch (err) {
         console.error("Error al guardar la configuración:", err);
-        alert('❌ Ocurrió un error al guardar: ' + err.message);
+        alert('❌ Error al guardar en Firebase: ' + err.message);
       } finally {
         saveBtn.disabled = false;
         saveBtn.textContent = 'Guardar Configuración';
