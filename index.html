@@ -1,9 +1,12 @@
+```html
 <!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mi Tienda + Whitelist + Storage Pro</title>
+
+  <title>Plan Frozen</title>
+
   <style>
     :root {
       --bg-color: #f4f6f8;
@@ -41,9 +44,25 @@
       box-shadow: var(--shadow);
     }
 
-    .brand { display: flex; align-items: center; gap: 10px; }
-    .brand img { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border-color); }
-    .controls { display: flex; gap: 10px; align-items: center; }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand img {
+      width: 45px;
+      height: 45px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 1px solid var(--border-color);
+    }
+
+    .controls {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
 
     button {
       cursor: pointer;
@@ -53,15 +72,51 @@
       font-weight: bold;
       transition: opacity 0.2s;
     }
-    button:hover { opacity: 0.9; }
-    button:disabled { opacity: 0.5; cursor: not-allowed; }
 
-    .btn-theme { background-color: var(--border-color); color: var(--text-color); }
-    .btn-admin { background-color: #333; color: white; }
-    .btn-add { background-color: #007bff; color: white; width: 100%; padding: 10px; }
-    .btn-whatsapp { background-color: var(--accent-color); color: white; width: 100%; padding: 12px; font-size: 1rem; margin-top: 15px; }
-    .btn-danger { background-color: #dc3545; color: white; }
-    .btn-edit { background-color: #ffc107; color: #000; }
+    button:hover {
+      opacity: 0.9;
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-theme {
+      background-color: var(--border-color);
+      color: var(--text-color);
+    }
+
+    .btn-admin {
+      background-color: #333;
+      color: white;
+    }
+
+    .btn-add {
+      background-color: #007bff;
+      color: white;
+      width: 100%;
+      padding: 10px;
+    }
+
+    .btn-whatsapp {
+      background-color: var(--accent-color);
+      color: white;
+      width: 100%;
+      padding: 12px;
+      font-size: 1rem;
+      margin-top: 15px;
+    }
+
+    .btn-danger {
+      background-color: #dc3545;
+      color: white;
+    }
+
+    .btn-edit {
+      background-color: #ffc107;
+      color: #000;
+    }
 
     main {
       display: grid;
@@ -73,7 +128,9 @@
     }
 
     @media (min-width: 768px) {
-      main { grid-template-columns: 2fr 1fr; }
+      main {
+        grid-template-columns: 2fr 1fr;
+      }
     }
 
     .products-grid {
@@ -100,8 +157,16 @@
       border-radius: 6px;
     }
 
-    .product-title { font-size: 1.1rem; margin: 10px 0 5px 0; }
-    .product-price { font-weight: bold; color: #007bff; margin-bottom: 10px; }
+    .product-title {
+      font-size: 1.1rem;
+      margin: 10px 0 5px 0;
+    }
+
+    .product-price {
+      font-weight: bold;
+      color: #007bff;
+      margin-bottom: 10px;
+    }
 
     .cart-section {
       background-color: var(--card-bg);
@@ -115,7 +180,10 @@
     .modal {
       display: none;
       position: fixed;
-      top: 0; left: 0; width: 100%; height: 100%;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
       background-color: rgba(0,0,0,0.6);
       justify-content: center;
       align-items: center;
@@ -136,14 +204,26 @@
 
     .close-modal {
       position: absolute;
-      top: 10px; right: 15px;
+      top: 10px;
+      right: 15px;
       font-size: 1.5rem;
       cursor: pointer;
     }
 
-    .form-group { margin-bottom: 1rem; }
-    .form-group label { display: block; margin-bottom: 0.5rem; font-weight: bold; font-size: 0.9rem; }
-    .form-group input, .form-group select, .form-group textarea {
+    .form-group {
+      margin-bottom: 1rem;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: bold;
+      font-size: 0.9rem;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
       width: 100%;
       padding: 8px;
       border: 1px solid var(--border-color);
@@ -159,590 +239,2497 @@
       gap: 5px;
       margin-top: 10px;
     }
-    .admin-actions button { flex: 1; padding: 5px; font-size: 0.85rem; }
+
+    .admin-actions button {
+      flex: 1;
+      padding: 5px;
+      font-size: 0.85rem;
+    }
+
+    .status-message {
+      grid-column: 1 / -1;
+      padding: 20px;
+      border-radius: 8px;
+      text-align: center;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+    }
+
+    .status-error {
+      color: #b00020;
+      border-color: #dc3545;
+    }
+
+    .status-loading {
+      color: #007bff;
+    }
   </style>
 </head>
+
 <body>
 
-  <header>
-    <div class="brand">
-      <img id="store-logo" src="https://via.placeholder.com/45" alt="Logo" onerror="this.onerror=null; this.src='https://via.placeholder.com/45'; console.error('Error al cargar la imagen del logo desde la URL guardada.');">
-      <h1 id="store-name">Plan Frozen</h1>
-    </div>
-    <div class="controls">
-      <button class="btn-theme" id="theme-toggle">🌙 Modo Oscuro</button>
-      <button class="btn-admin" id="open-admin-btn">🔑 Panel Dueño</button>
-    </div>
-  </header>
+<header>
 
-  <main>
-    <section>
-      <h2>Productos</h2>
-      <div class="products-grid" id="products-container">
-        <p>Cargando productos...</p>
-      </div>
-    </section>
+  <div class="brand">
+    <img
+      id="store-logo"
+      src="https://via.placeholder.com/45"
+      alt="Logo"
+    >
 
-    <aside class="cart-section">
-      <h2>Tu Pedido</h2>
-      <div id="cart-items"><p>El carrito está vacío.</p></div>
-      <div class="cart-total" id="cart-total" style="font-size: 1.2rem; font-weight: bold; margin-top: 15px; text-align: right;">Total: $0</div>
-      <button class="btn-whatsapp" id="open-checkout-btn">Finalizar Pedido</button>
-    </aside>
-  </main>
-
-  <!-- MODAL CHECKOUT CLIENTE -->
-  <div class="modal" id="checkout-modal">
-    <div class="modal-content">
-      <span class="close-modal" id="close-checkout">&times;</span>
-      <h2>Datos para la Entrega</h2>
-      <form id="checkout-form">
-        <div class="form-group">
-          <label>Nombre Completo:</label>
-          <input type="text" id="cust-name" required placeholder="Ej: Juan Pérez">
-        </div>
-        <div class="form-group">
-          <label>Dirección de Entrega:</label>
-          <input type="text" id="cust-address" required placeholder="Ej: Av. San Martín 1234">
-        </div>
-        <div class="form-group">
-          <label>Método de Pago:</label>
-          <select id="cust-payment" required>
-            <option value="Efectivo">Efectivo contra entrega</option>
-            <option value="Transferencia">Transferencia bancaria / MP</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Notas opcionales:</label>
-          <textarea id="cust-notes" rows="2" placeholder="Ej: Timbre 2B, o aclaraciones sobre el pedido"></textarea>
-        </div>
-        <button type="submit" class="btn-whatsapp">📲 Enviar Pedido a WhatsApp</button>
-      </form>
-    </div>
+    <h1 id="store-name">Plan Frozen</h1>
   </div>
 
-  <!-- MODAL AUTH -->
-  <div class="modal" id="login-modal">
-    <div class="modal-content">
-      <span class="close-modal" id="close-login">&times;</span>
-      <h2>Acceso al Panel</h2>
-      <form id="auth-form">
-        <div class="form-group">
-          <label>Email autorizable:</label>
-          <input type="email" id="auth-email" placeholder="tu@email.com" required>
-        </div>
-        <div class="form-group">
-          <label>Contraseña:</label>
-          <input type="password" id="auth-password" placeholder="••••••••" required>
-        </div>
-        <div style="display: flex; gap: 10px; margin-top: 15px;">
-          <button type="submit" id="btn-login-direct" class="btn-add" style="flex:1;">Iniciar Sesión</button>
-          <button type="button" id="btn-register-direct" class="btn-edit" style="flex:1;">Crear Cuenta</button>
-        </div>
-      </form>
-    </div>
+  <div class="controls">
+    <button class="btn-theme" id="theme-toggle">
+      🌙 Modo Oscuro
+    </button>
+
+    <button class="btn-admin" id="open-admin-btn">
+      🔑 Panel Dueño
+    </button>
   </div>
 
-  <!-- MODAL PANEL DUEÑO / TRABAJADOR -->
-  <div class="modal" id="admin-modal">
-    <div class="modal-content">
-      <span class="close-modal" id="close-admin">&times;</span>
-      <h2>Panel del Dueño / Empleado</h2>
-      <p style="font-size: 0.85rem;">Conectado como: <strong id="user-email-display"></strong> (<span id="user-role-display"></span>)</p>
-      <button id="logout-btn" class="btn-danger" style="margin-bottom: 15px;">Cerrar Sesión</button>
-      
-      <hr style="border-color: var(--border-color);">
+</header>
 
-      <h3>Configuración General</h3>
-      <div class="form-group">
-        <label>Nombre del Local:</label>
-        <input type="text" id="cfg-name">
+
+<main>
+
+  <section>
+
+    <h2>Productos</h2>
+
+    <div class="products-grid" id="products-container">
+      <div class="status-message status-loading">
+        ⏳ Conectando con los productos...
       </div>
-
-      <div class="form-group">
-        <label>Logo del Local:</label>
-        <div style="margin-bottom: 8px;">
-          <small>📁 Subir desde Galería/Archivos:</small>
-          <input type="file" id="cfg-logo-file" accept="image/*">
-        </div>
-        <div>
-          <small>🔗 O pegar URL de imagen:</small>
-          <input type="text" id="cfg-logo" placeholder="https://ejemplo.com/logo.png">
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label>WhatsApp (con código de país):</label>
-        <input type="text" id="cfg-whatsapp">
-      </div>
-      <button id="save-cfg-btn" class="btn-add" style="margin-bottom: 20px;">Guardar Configuración</button>
-
-      <hr style="border-color: var(--border-color);">
-
-      <h3 id="form-title">Agregar / Editar Producto</h3>
-      <form id="product-form">
-        <input type="hidden" id="prod-id">
-        <div class="form-group">
-          <label>Nombre del Producto:</label>
-          <input type="text" id="prod-name" required>
-        </div>
-        <div class="form-group">
-          <label>Precio ($):</label>
-          <input type="number" id="prod-price" required>
-        </div>
-        
-        <div class="form-group">
-          <label>Imagen del Producto:</label>
-          <div style="margin-bottom: 8px;">
-            <small>📁 Subir desde Galería/Archivos:</small>
-            <input type="file" id="prod-image-file" accept="image/*">
-          </div>
-          <div>
-            <small>🔗 O pegar URL de imagen:</small>
-            <input type="text" id="prod-image" placeholder="https://ejemplo.com/imagen.jpg">
-          </div>
-        </div>
-
-        <button type="submit" class="btn-add" id="prod-submit-btn">Guardar Producto</button>
-      </form>
     </div>
+
+  </section>
+
+
+  <aside class="cart-section">
+
+    <h2>Tu Pedido</h2>
+
+    <div id="cart-items">
+      <p>El carrito está vacío.</p>
+    </div>
+
+    <div
+      class="cart-total"
+      id="cart-total"
+      style="font-size:1.2rem;font-weight:bold;margin-top:15px;text-align:right;"
+    >
+      Total: $0
+    </div>
+
+    <button
+      class="btn-whatsapp"
+      id="open-checkout-btn"
+    >
+      Finalizar Pedido
+    </button>
+
+  </aside>
+
+</main>
+
+
+<!-- CHECKOUT -->
+
+<div class="modal" id="checkout-modal">
+
+  <div class="modal-content">
+
+    <span class="close-modal" id="close-checkout">
+      &times;
+    </span>
+
+    <h2>Datos para la Entrega</h2>
+
+    <form id="checkout-form">
+
+      <div class="form-group">
+
+        <label>Nombre Completo:</label>
+
+        <input
+          type="text"
+          id="cust-name"
+          required
+          placeholder="Ej: Juan Pérez"
+        >
+
+      </div>
+
+
+      <div class="form-group">
+
+        <label>Dirección de Entrega:</label>
+
+        <input
+          type="text"
+          id="cust-address"
+          required
+          placeholder="Ej: Av. San Martín 1234"
+        >
+
+      </div>
+
+
+      <div class="form-group">
+
+        <label>Método de Pago:</label>
+
+        <select id="cust-payment">
+
+          <option value="Efectivo">
+            Efectivo contra entrega
+          </option>
+
+          <option value="Transferencia">
+            Transferencia bancaria / MP
+          </option>
+
+        </select>
+
+      </div>
+
+
+      <div class="form-group">
+
+        <label>Notas opcionales:</label>
+
+        <textarea
+          id="cust-notes"
+          rows="2"
+          placeholder="Ej: Timbre 2B"
+        ></textarea>
+
+      </div>
+
+
+      <button
+        type="submit"
+        class="btn-whatsapp"
+      >
+        📲 Enviar Pedido a WhatsApp
+      </button>
+
+    </form>
+
   </div>
 
-  <!-- FIREBASE SDKs v10 -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { 
-      getAuth, 
-      signInWithEmailAndPassword, 
-      createUserWithEmailAndPassword, 
-      onAuthStateChanged, 
-      signOut 
-    } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-    import { 
-      getFirestore, 
-      collection, 
-      onSnapshot, 
-      doc, 
-      setDoc, 
-      deleteDoc 
-    } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-    import { 
-      getStorage, 
-      ref, 
-      uploadBytes, 
-      getDownloadURL 
-    } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
+</div>
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyBgeGRJYsMLz_QTvPz8TPHyRNCh8Wye6Kk",
-      authDomain: "maria-elena-mendoza.firebaseapp.com",
-      projectId: "maria-elena-mendoza",
-      storageBucket: "maria-elena-mendoza.appspot.com",
-      messagingSenderId: "1032829032543",
-      appId: "1:1032829032543:web:53a6eb6401657c917ee7b8"
-    };
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-    const storage = getStorage(app);
+<!-- LOGIN -->
 
-    const WHITELIST = {
-      "mariaelenamendoza@hotmail.com": { rol: "dueño", nombre: "María Elena" },
-      "matytorres1997@gmail.com": { rol: "empleado", nombre: "Matias" },
-      "elflacotorres75@gmail.com": { rol: "empleado", nombre: "Flaco Torres" }
-    };
+<div class="modal" id="login-modal">
 
-    let currentUser = null;
-    let currentUserData = null;
-    let products = [];
-    let cart = [];
+  <div class="modal-content">
 
-    let storeConfig = {
-      name: "Plan Frozen",
-      whatsappNumber: "5491123456789",
-      logoUrl: "https://via.placeholder.com/45"
-    };
+    <span class="close-modal" id="close-login">
+      &times;
+    </span>
 
-    async function compressImageFile(file, maxDim = 400) {
-      const bitmap = await createImageBitmap(file);
-      let w = bitmap.width, h = bitmap.height;
-      if (w > maxDim || h > maxDim) {
-        if (w > h) { h = Math.round((h * maxDim) / w); w = maxDim; }
-        else { w = Math.round((w * maxDim) / h); h = maxDim; }
-      }
-      const canvas = document.createElement('canvas');
-      canvas.width = w;
-      canvas.height = h;
-      const ctx = canvas.getContext('2d');
-      ctx.drawImage(bitmap, 0, 0, w, h);
-      return new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.8));
+    <h2>Acceso al Panel</h2>
+
+    <form id="auth-form">
+
+      <div class="form-group">
+
+        <label>Email autorizado:</label>
+
+        <input
+          type="email"
+          id="auth-email"
+          required
+        >
+
+      </div>
+
+
+      <div class="form-group">
+
+        <label>Contraseña:</label>
+
+        <input
+          type="password"
+          id="auth-password"
+          required
+        >
+
+      </div>
+
+
+      <div style="display:flex;gap:10px;margin-top:15px;">
+
+        <button
+          type="submit"
+          class="btn-add"
+          style="flex:1;"
+        >
+          Iniciar Sesión
+        </button>
+
+
+        <button
+          type="button"
+          id="btn-register-direct"
+          class="btn-edit"
+          style="flex:1;"
+        >
+          Crear Cuenta
+        </button>
+
+      </div>
+
+    </form>
+
+  </div>
+
+</div>
+
+
+<!-- PANEL ADMIN -->
+
+<div class="modal" id="admin-modal">
+
+  <div class="modal-content">
+
+    <span class="close-modal" id="close-admin">
+      &times;
+    </span>
+
+    <h2>Panel del Dueño / Empleado</h2>
+
+    <p>
+      Conectado como:
+      <strong id="user-email-display"></strong>
+      (<span id="user-role-display"></span>)
+    </p>
+
+
+    <button
+      id="logout-btn"
+      class="btn-danger"
+      style="margin-bottom:15px;"
+    >
+      Cerrar Sesión
+    </button>
+
+
+    <hr>
+
+
+    <h3>Configuración General</h3>
+
+
+    <div class="form-group">
+
+      <label>Nombre del Local:</label>
+
+      <input
+        type="text"
+        id="cfg-name"
+      >
+
+    </div>
+
+
+    <div class="form-group">
+
+      <label>Logo del Local:</label>
+
+      <input
+        type="file"
+        id="cfg-logo-file"
+        accept="image/*"
+      >
+
+      <br><br>
+
+      <input
+        type="text"
+        id="cfg-logo"
+        placeholder="URL del logo"
+      >
+
+    </div>
+
+
+    <div class="form-group">
+
+      <label>WhatsApp:</label>
+
+      <input
+        type="text"
+        id="cfg-whatsapp"
+      >
+
+    </div>
+
+
+    <button
+      id="save-cfg-btn"
+      class="btn-add"
+      style="margin-bottom:20px;"
+    >
+      Guardar Configuración
+    </button>
+
+
+    <hr>
+
+
+    <h3>Agregar / Editar Producto</h3>
+
+
+    <form id="product-form">
+
+      <input type="hidden" id="prod-id">
+
+
+      <div class="form-group">
+
+        <label>Nombre:</label>
+
+        <input
+          type="text"
+          id="prod-name"
+          required
+        >
+
+      </div>
+
+
+      <div class="form-group">
+
+        <label>Precio:</label>
+
+        <input
+          type="number"
+          id="prod-price"
+          required
+        >
+
+      </div>
+
+
+      <div class="form-group">
+
+        <label>Imagen:</label>
+
+        <input
+          type="file"
+          id="prod-image-file"
+          accept="image/*"
+        >
+
+        <br><br>
+
+        <input
+          type="text"
+          id="prod-image"
+          placeholder="URL de imagen"
+        >
+
+      </div>
+
+
+      <button
+        type="submit"
+        class="btn-add"
+        id="prod-submit-btn"
+      >
+        Guardar Producto
+      </button>
+
+    </form>
+
+  </div>
+
+</div>
+
+
+
+<script type="module">
+
+import {
+  initializeApp
+} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+
+
+import {
+
+  getAuth,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  onAuthStateChanged,
+  signOut
+
+} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+
+import {
+
+  getFirestore,
+  collection,
+  onSnapshot,
+  doc,
+  setDoc,
+  deleteDoc
+
+} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+
+import {
+
+  getStorage,
+  ref,
+  uploadBytes,
+  getDownloadURL
+
+} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
+
+
+
+/* =========================
+   FIREBASE
+========================= */
+
+const firebaseConfig = {
+
+  apiKey: "AIzaSyBgeGRJYsMLz_QTvPz8TPHyRNCh8Wye6Kk",
+
+  authDomain: "maria-elena-mendoza.firebaseapp.com",
+
+  projectId: "maria-elena-mendoza",
+
+  storageBucket: "maria-elena-mendoza.appspot.com",
+
+  messagingSenderId: "1032829032543",
+
+  appId: "1:1032829032543:web:53a6eb6401657c917ee7b8"
+
+};
+
+
+const app = initializeApp(firebaseConfig);
+
+const auth = getAuth(app);
+
+const db = getFirestore(app);
+
+const storage = getStorage(app);
+
+
+
+/* =========================
+   WHITELIST
+========================= */
+
+const WHITELIST = {
+
+  "mariaelenamendoza@hotmail.com": {
+    rol: "dueño",
+    nombre: "María Elena"
+  },
+
+  "matytorres1997@gmail.com": {
+    rol: "empleado",
+    nombre: "Matias"
+  },
+
+  "elflacotorres75@gmail.com": {
+    rol: "empleado",
+    nombre: "Flaco Torres"
+  }
+
+};
+
+
+
+let currentUser = null;
+
+let currentUserData = null;
+
+let products = [];
+
+let cart = [];
+
+
+let storeConfig = {
+
+  name: "Plan Frozen",
+
+  whatsappNumber: "5491123456789",
+
+  logoUrl: "https://via.placeholder.com/45"
+
+};
+
+
+
+/* =========================
+   COMPRESIÓN IMÁGENES
+========================= */
+
+async function compressImageFile(file, maxDim = 400) {
+
+  const bitmap = await createImageBitmap(file);
+
+  let w = bitmap.width;
+
+  let h = bitmap.height;
+
+
+  if (w > maxDim || h > maxDim) {
+
+    if (w > h) {
+
+      h = Math.round(
+        (h * maxDim) / w
+      );
+
+      w = maxDim;
+
+    } else {
+
+      w = Math.round(
+        (w * maxDim) / h
+      );
+
+      h = maxDim;
+
     }
 
-    function verificarWhitelistLocal(email) {
-      if (!email) return null;
-      return WHITELIST[email.trim().toLowerCase()] || null;
-    }
+  }
 
-    function initStoreConfigListener() {
-      onSnapshot(doc(db, "configuracion", "general"), (docSnap) => {
-        if (docSnap.exists()) {
-          storeConfig = docSnap.data();
-          document.getElementById('store-name').textContent = storeConfig.name || "Plan Frozen";
-          if (storeConfig.logoUrl) {
-            document.getElementById('store-logo').src = storeConfig.logoUrl;
-          }
-        }
-      }, (error) => {
-        console.error("Error al escuchar la configuración global:", error);
-      });
-    }
 
-    function initProductsListener() {
-      const prodsRef = collection(db, "productos");
-      onSnapshot(prodsRef, (snapshot) => {
-        products = [];
-        snapshot.forEach((docSnap) => {
-          products.push({ id: docSnap.id, ...docSnap.data() });
-        });
-        renderProducts();
-      }, (error) => {
-        console.error("Error al escuchar productos en Firestore:", error);
-      });
-    }
+  const canvas = document.createElement("canvas");
 
-    onAuthStateChanged(auth, async (user) => {
-      const openAdminBtn = document.getElementById('open-admin-btn');
+  canvas.width = w;
 
-      if (user) {
-        const userData = verificarWhitelistLocal(user.email);
+  canvas.height = h;
 
-        if (userData) {
-          currentUser = user;
-          currentUserData = userData;
-          openAdminBtn.textContent = '⚙️ Panel Activo';
-          document.getElementById('user-email-display').textContent = user.email;
-          document.getElementById('user-role-display').textContent = userData.rol.toUpperCase();
-        } else {
-          alert("⛔ Acceso denegado: El correo (" + user.email + ") no está en la Whitelist.");
-          await signOut(auth);
-          currentUser = null;
-          currentUserData = null;
-          openAdminBtn.textContent = '🔑 Panel Dueño';
-        }
-      } else {
-        currentUser = null;
-        currentUserData = null;
-        openAdminBtn.textContent = '🔑 Panel Dueño';
-      }
-      renderProducts();
-    });
 
-    document.getElementById('auth-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const email = document.getElementById('auth-email').value.trim().toLowerCase();
-      const password = document.getElementById('auth-password').value;
+  const ctx = canvas.getContext("2d");
 
-      if (!verificarWhitelistLocal(email)) {
-        return alert("⛔ Acceso bloqueado: Tu correo no tiene permisos asignados.");
-      }
+  ctx.drawImage(
+    bitmap,
+    0,
+    0,
+    w,
+    h
+  );
 
-      try {
-        await signInWithEmailAndPassword(auth, email, password);
-        document.getElementById('login-modal').style.display = 'none';
-        document.getElementById('auth-form').reset();
-      } catch (error) {
-        alert('Error al ingresar: ' + error.message);
-      }
-    });
 
-    document.getElementById('btn-register-direct').addEventListener('click', async () => {
-      const email = document.getElementById('auth-email').value.trim().toLowerCase();
-      const password = document.getElementById('auth-password').value;
+  return new Promise(resolve => {
 
-      if (!email || !password) {
-        return alert("Por favor ingresá tu email y una contraseña para registrarte.");
-      }
+    canvas.toBlob(
+      resolve,
+      "image/jpeg",
+      0.8
+    );
 
-      if (!verificarWhitelistLocal(email)) {
-        return alert("⛔ Acceso bloqueado: Tu correo no está en la lista autorizada.");
-      }
+  });
 
-      try {
-        await createUserWithEmailAndPassword(auth, email, password);
-        alert('¡Cuenta creada con éxito! Ya tenés acceso al panel.');
-        document.getElementById('login-modal').style.display = 'none';
-        document.getElementById('auth-form').reset();
-      } catch (error) {
-        alert('Error al registrar cuenta: ' + error.message);
-      }
-    });
+}
 
-    document.getElementById('logout-btn').addEventListener('click', async () => {
-      await signOut(auth);
-      document.getElementById('admin-modal').style.display = 'none';
-    });
 
-    function init() {
-      initStoreConfigListener();
-      initProductsListener();
-    }
 
-    function renderProducts() {
-      const container = document.getElementById('products-container');
-      container.innerHTML = '';
+/* =========================
+   WHITELIST
+========================= */
 
-      if (products.length === 0) {
-        container.innerHTML = '<p>No hay productos disponibles por el momento.</p>';
-        return;
-      }
+function verificarWhitelistLocal(email) {
 
-      products.forEach(product => {
-        const card = document.createElement('div');
-        card.className = 'product-card';
-        
-        let adminButtons = '';
-        if (currentUser) {
-          adminButtons = `
-            <div class="admin-actions">
-              <button class="btn-edit" data-id="${product.id}">Editar</button>
-              <button class="btn-danger" data-id="${product.id}">Eliminar</button>
-            </div>
-          `;
-        }
+  if (!email) return null;
 
-        card.innerHTML = `
-          <img src="${product.image || 'https://via.placeholder.com/150'}" alt="${product.name}" onerror="this.src='https://via.placeholder.com/150'">
-          <div class="product-title">${product.name}</div>
-          <div class="product-price">$${product.price}</div>
-          <button class="btn-add" data-add="${product.id}">Agregar al Carrito</button>
-          ${adminButtons}
-        `;
-        container.appendChild(card);
-      });
+  return WHITELIST[
+    email.trim().toLowerCase()
+  ] || null;
 
-      document.querySelectorAll('[data-add]').forEach(btn => {
-        btn.addEventListener('click', (e) => addToCart(e.target.dataset.add));
-      });
-      document.querySelectorAll('.btn-edit').forEach(btn => {
-        btn.addEventListener('click', (e) => editProduct(e.target.dataset.id));
-      });
-      document.querySelectorAll('.btn-danger').forEach(btn => {
-        if(btn.dataset.id) btn.addEventListener('click', (e) => deleteProduct(e.target.dataset.id));
-      });
-    }
+}
 
-    function addToCart(productId) {
-      const itemInCart = cart.find(item => item.id === productId);
-      if (itemInCart) {
-        itemInCart.quantity++;
-      } else {
-        const product = products.find(p => p.id === productId);
-        if (product) cart.push({ ...product, quantity: 1 });
-      }
-      updateCartUI();
-    }
 
-    function updateCartUI() {
-      const cartContainer = document.getElementById('cart-items');
-      const totalContainer = document.getElementById('cart-total');
 
-      if (cart.length === 0) {
-        cartContainer.innerHTML = '<p>El carrito está vacío.</p>';
-        totalContainer.textContent = 'Total: $0';
-        return;
-      }
+/* =========================
+   CONFIGURACIÓN FIRESTORE
+========================= */
 
-      cartContainer.innerHTML = '';
-      let total = 0;
+function initStoreConfigListener() {
 
-      cart.forEach(item => {
-        const subtotal = item.price * item.quantity;
-        total += subtotal;
-        cartContainer.innerHTML += `
-          <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
-            <div><strong>${item.name}</strong><br><small>$${item.price} x ${item.quantity}</small></div>
-            <div>$${subtotal}</div>
-          </div>
-        `;
-      });
+  console.log(
+    "⚙️ Conectando con configuración..."
+  );
 
-      totalContainer.textContent = `Total: $${total}`;
-    }
 
-    const checkoutModal = document.getElementById('checkout-modal');
+  onSnapshot(
 
-    document.getElementById('open-checkout-btn').addEventListener('click', () => {
-      if (cart.length === 0) return alert('El carrito está vacío.');
-      checkoutModal.style.display = 'flex';
-    });
+    doc(
+      db,
+      "configuracion",
+      "general"
+    ),
 
-    document.getElementById('close-checkout').onclick = () => checkoutModal.style.display = 'none';
+    (docSnap) => {
 
-    document.getElementById('checkout-form').addEventListener('submit', (e) => {
-      e.preventDefault();
+      console.log(
+        "⚙️ Configuración recibida:",
+        docSnap.exists()
+      );
 
-      const name = document.getElementById('cust-name').value;
-      const address = document.getElementById('cust-address').value;
-      const payment = document.getElementById('cust-payment').value;
-      const notes = document.getElementById('cust-notes').value;
 
-      let message = `*¡Nuevo Pedido en ${storeConfig.name}!*\n\n`;
-      message += `👤 *Cliente:* ${name}\n`;
-      message += `📍 *Dirección:* ${address}\n`;
-      message += `💳 *Pago:* ${payment}\n`;
-      if (notes.trim()) message += `📝 *Notas:* ${notes}\n`;
-      
-      message += `\n*Detalle del pedido:*\n`;
-      let total = 0;
+      if (docSnap.exists()) {
 
-      cart.forEach(item => {
-        const subtotal = item.price * item.quantity;
-        total += subtotal;
-        message += `• ${item.name} x${item.quantity} - $${subtotal}\n`;
-      });
+        storeConfig = {
 
-      message += `\n*Total a pagar:* $${total}`;
+          ...storeConfig,
 
-      window.open(`https://wa.me/${storeConfig.whatsappNumber}?text=${encodeURIComponent(message)}`, '_blank');
-      checkoutModal.style.display = 'none';
-    });
+          ...docSnap.data()
 
-    document.getElementById('product-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      if (!currentUser) return alert('Debes iniciar sesión.');
-
-      const submitBtn = document.getElementById('prod-submit-btn');
-      const id = document.getElementById('prod-id').value || Date.now().toString();
-      const name = document.getElementById('prod-name').value;
-      const price = parseFloat(document.getElementById('prod-price').value);
-      const urlInput = document.getElementById('prod-image').value.trim();
-      const fileInput = document.getElementById('prod-image-file');
-
-      submitBtn.disabled = true;
-      submitBtn.textContent = '⏳ Guardando producto...';
-
-      try {
-        const existingProduct = products.find(p => p.id === id);
-        let finalImageUrl = urlInput || (existingProduct ? existingProduct.image : 'https://via.placeholder.com/150');
-
-        if (fileInput.files.length > 0) {
-          const file = fileInput.files[0];
-          const compressedBlob = await compressImageFile(file, 400);
-          const storageRef = ref(storage, 'productos/prod_' + Date.now() + '.jpg');
-          const snapshot = await uploadBytes(storageRef, compressedBlob);
-          finalImageUrl = await getDownloadURL(snapshot.ref);
-        }
-
-        await setDoc(doc(db, "productos", id), { name, price, image: finalImageUrl });
-
-        document.getElementById('admin-modal').style.display = 'none';
-        document.getElementById('product-form').reset();
-      } catch (err) {
-        console.error("Error al guardar producto:", err);
-        alert("❌ Error al guardar producto: " + err.message);
-      } finally {
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Guardar Producto';
-      }
-    });
-
-    function editProduct(id) {
-      const prod = products.find(p => p.id === id);
-      if (prod) {
-        document.getElementById('prod-id').value = prod.id;
-        document.getElementById('prod-name').value = prod.name;
-        document.getElementById('prod-price').value = prod.price;
-        document.getElementById('prod-image').value = prod.image || '';
-        document.getElementById('prod-image-file').value = '';
-        document.getElementById('admin-modal').style.display = 'flex';
-      }
-    }
-
-    async function deleteProduct(id) {
-      if (confirm('¿Eliminar producto de Firestore?')) {
-        try {
-          await deleteDoc(doc(db, "productos", id));
-          alert('Producto eliminado.');
-        } catch (error) {
-          alert('Error al eliminar: ' + error.message);
-        }
-      }
-    }
-
-    const loginModal = document.getElementById('login-modal');
-    const adminModal = document.getElementById('admin-modal');
-
-    document.getElementById('open-admin-btn').addEventListener('click', () => {
-      if (currentUser) {
-        document.getElementById('cfg-name').value = storeConfig.name || '';
-        document.getElementById('cfg-logo').value = storeConfig.logoUrl || '';
-        document.getElementById('cfg-whatsapp').value = storeConfig.whatsappNumber || '';
-        adminModal.style.display = 'flex';
-      } else {
-        loginModal.style.display = 'flex';
-      }
-    });
-
-    document.getElementById('close-login').onclick = () => loginModal.style.display = 'none';
-    document.getElementById('close-admin').onclick = () => adminModal.style.display = 'none';
-
-    document.getElementById('theme-toggle').addEventListener('click', () => {
-      const isDark = document.body.getAttribute('data-theme') === 'dark';
-      if (isDark) {
-        document.body.removeAttribute('data-theme');
-        document.getElementById('theme-toggle').textContent = '🌙 Modo Oscuro';
-      } else {
-        document.body.setAttribute('data-theme', 'dark');
-        document.getElementById('theme-toggle').textContent = '☀️ Modo Claro';
-      }
-    });
-
-    document.getElementById('save-cfg-btn').addEventListener('click', async () => {
-      const saveBtn = document.getElementById('save-cfg-btn');
-      const fileInput = document.getElementById('cfg-logo-file');
-      const urlInput = document.getElementById('cfg-logo');
-
-      const nuevoNombre = document.getElementById('cfg-name').value;
-      const nuevoWsp = document.getElementById('cfg-whatsapp').value;
-      const urlManual = urlInput.value.trim();
-
-      saveBtn.disabled = true;
-      saveBtn.textContent = '⏳ Subiendo logo y guardando...';
-
-      try {
-        let logoFinalUrl = urlManual || storeConfig.logoUrl;
-
-        if (fileInput.files.length > 0) {
-          const file = fileInput.files[0];
-          const compressedBlob = await compressImageFile(file, 300);
-          const storageRef = ref(storage, 'logo/logo_tienda.jpg');
-          const uploadSnapshot = await uploadBytes(storageRef, compressedBlob);
-          logoFinalUrl = await getDownloadURL(uploadSnapshot.ref);
-        }
-
-        const updateData = {
-          name: nuevoNombre,
-          whatsappNumber: nuevoWsp,
-          logoUrl: logoFinalUrl
         };
 
-        await setDoc(doc(db, "configuracion", "general"), updateData, { merge: true });
 
-        alert('✅ ¡Configuración y logo guardados con éxito!');
-        document.getElementById('admin-modal').style.display = 'none';
+        document
+          .getElementById("store-name")
+          .textContent =
+            storeConfig.name ||
+            "Plan Frozen";
 
-      } catch (err) {
-        console.error("Error al guardar la configuración:", err);
-        alert('❌ Error al guardar en Firebase: ' + err.message);
-      } finally {
-        saveBtn.disabled = false;
-        saveBtn.textContent = 'Guardar Configuración';
-        fileInput.value = '';
+
+        if (storeConfig.logoUrl) {
+
+          document
+            .getElementById("store-logo")
+            .src =
+              storeConfig.logoUrl;
+
+        }
+
       }
-    });
 
-    init();
-  </script>
+    },
+
+
+    (error) => {
+
+      console.error(
+        "❌ ERROR CONFIGURACIÓN:",
+        error
+      );
+
+    }
+
+  );
+
+}
+
+
+
+/* =========================
+   PRODUCTOS FIRESTORE
+========================= */
+
+function initProductsListener() {
+
+  console.log(
+    "📡 Conectando con Firestore..."
+  );
+
+
+  const container =
+    document.getElementById(
+      "products-container"
+    );
+
+
+  container.innerHTML = `
+    <div class="status-message status-loading">
+      ⏳ Cargando productos...
+    </div>
+  `;
+
+
+  const prodsRef =
+    collection(
+      db,
+      "productos"
+    );
+
+
+  onSnapshot(
+
+    prodsRef,
+
+
+    (snapshot) => {
+
+      console.log(
+        "📦 PRODUCTOS ENCONTRADOS:",
+        snapshot.size
+      );
+
+
+      const newProducts = [];
+
+
+      snapshot.forEach((docSnap) => {
+
+        console.log(
+          "Producto recibido:",
+          docSnap.id,
+          docSnap.data()
+        );
+
+
+        newProducts.push({
+
+          id: docSnap.id,
+
+          ...docSnap.data()
+
+        });
+
+      });
+
+
+      products = newProducts;
+
+
+      renderProducts();
+
+    },
+
+
+    (error) => {
+
+      console.error(
+        "❌ ERROR FIRESTORE PRODUCTOS:",
+        error
+      );
+
+
+      /*
+      Si ya había productos cargados,
+      no borramos la vista.
+      */
+
+      if (products.length > 0) {
+
+        console.warn(
+          "Se conserva la última lista de productos."
+        );
+
+        return;
+
+      }
+
+
+      container.innerHTML = `
+
+        <div class="status-message status-error">
+
+          <strong>
+            ❌ No se pudieron cargar los productos
+          </strong>
+
+          <br><br>
+
+          Revisá la consola del navegador.
+
+          <br>
+
+          Error:
+          ${error.code || "desconocido"}
+
+        </div>
+
+      `;
+
+    }
+
+  );
+
+}
+
+
+
+/* =========================
+   AUTH
+========================= */
+
+onAuthStateChanged(
+  auth,
+
+  async (user) => {
+
+    const openAdminBtn =
+      document.getElementById(
+        "open-admin-btn"
+      );
+
+
+    if (user) {
+
+      const userData =
+        verificarWhitelistLocal(
+          user.email
+        );
+
+
+      if (userData) {
+
+        currentUser = user;
+
+        currentUserData =
+          userData;
+
+
+        openAdminBtn.textContent =
+          "⚙️ Panel Activo";
+
+
+        document
+          .getElementById(
+            "user-email-display"
+          )
+          .textContent =
+            user.email;
+
+
+        document
+          .getElementById(
+            "user-role-display"
+          )
+          .textContent =
+            userData.rol.toUpperCase();
+
+
+      } else {
+
+        alert(
+          "⛔ Acceso denegado."
+        );
+
+
+        await signOut(auth);
+
+
+        currentUser = null;
+
+        currentUserData = null;
+
+
+        openAdminBtn.textContent =
+          "🔑 Panel Dueño";
+
+      }
+
+
+    } else {
+
+      currentUser = null;
+
+      currentUserData = null;
+
+
+      openAdminBtn.textContent =
+        "🔑 Panel Dueño";
+
+    }
+
+
+    renderProducts();
+
+  }
+);
+
+
+
+/* =========================
+   LOGIN
+========================= */
+
+document
+  .getElementById("auth-form")
+  .addEventListener(
+    "submit",
+
+    async (e) => {
+
+      e.preventDefault();
+
+
+      const email =
+        document
+          .getElementById("auth-email")
+          .value
+          .trim()
+          .toLowerCase();
+
+
+      const password =
+        document
+          .getElementById("auth-password")
+          .value;
+
+
+      if (
+        !verificarWhitelistLocal(
+          email
+        )
+      ) {
+
+        return alert(
+          "⛔ Este correo no tiene permisos."
+        );
+
+      }
+
+
+      try {
+
+        await signInWithEmailAndPassword(
+          auth,
+          email,
+          password
+        );
+
+
+        document
+          .getElementById(
+            "login-modal"
+          )
+          .style.display =
+            "none";
+
+
+        document
+          .getElementById(
+            "auth-form"
+          )
+          .reset();
+
+
+      } catch (error) {
+
+        console.error(error);
+
+
+        alert(
+          "❌ Error al ingresar:\n" +
+          error.message
+        );
+
+      }
+
+    }
+  );
+
+
+
+/* =========================
+   REGISTRO
+========================= */
+
+document
+  .getElementById(
+    "btn-register-direct"
+  )
+  .addEventListener(
+
+    "click",
+
+    async () => {
+
+      const email =
+        document
+          .getElementById(
+            "auth-email"
+          )
+          .value
+          .trim()
+          .toLowerCase();
+
+
+      const password =
+        document
+          .getElementById(
+            "auth-password"
+          )
+          .value;
+
+
+      if (
+        !email ||
+        !password
+      ) {
+
+        return alert(
+          "Ingresá email y contraseña."
+        );
+
+      }
+
+
+      if (
+        !verificarWhitelistLocal(
+          email
+        )
+      ) {
+
+        return alert(
+          "⛔ Este correo no está autorizado."
+        );
+
+      }
+
+
+      try {
+
+        await createUserWithEmailAndPassword(
+          auth,
+          email,
+          password
+        );
+
+
+        alert(
+          "✅ Cuenta creada correctamente."
+        );
+
+
+        document
+          .getElementById(
+            "login-modal"
+          )
+          .style.display =
+            "none";
+
+
+        document
+          .getElementById(
+            "auth-form"
+          )
+          .reset();
+
+
+      } catch (error) {
+
+        console.error(error);
+
+
+        alert(
+          "❌ Error al registrar:\n" +
+          error.message
+        );
+
+      }
+
+    }
+  );
+
+
+
+/* =========================
+   LOGOUT
+========================= */
+
+document
+  .getElementById("logout-btn")
+  .addEventListener(
+
+    "click",
+
+    async () => {
+
+      await signOut(auth);
+
+
+      document
+        .getElementById(
+          "admin-modal"
+        )
+        .style.display =
+          "none";
+
+    }
+  );
+
+
+
+/* =========================
+   RENDER PRODUCTOS
+========================= */
+
+function renderProducts() {
+
+  const container =
+    document.getElementById(
+      "products-container"
+    );
+
+
+  if (
+    !Array.isArray(products)
+  ) {
+
+    console.error(
+      "La variable products no es válida:",
+      products
+    );
+
+    return;
+
+  }
+
+
+  if (
+    products.length === 0
+  ) {
+
+    container.innerHTML = `
+
+      <div class="status-message">
+
+        📦
+
+        <br><br>
+
+        No hay productos disponibles
+        por el momento.
+
+      </div>
+
+    `;
+
+    return;
+
+  }
+
+
+  container.innerHTML = "";
+
+
+  products.forEach(
+    product => {
+
+      const card =
+        document.createElement(
+          "div"
+        );
+
+
+      card.className =
+        "product-card";
+
+
+      let adminButtons =
+        "";
+
+
+      if (
+        currentUser
+      ) {
+
+        adminButtons = `
+
+          <div class="admin-actions">
+
+            <button
+              class="btn-edit"
+              data-id="${product.id}"
+            >
+              Editar
+            </button>
+
+
+            <button
+              class="btn-danger"
+              data-id="${product.id}"
+            >
+              Eliminar
+            </button>
+
+          </div>
+
+        `;
+
+      }
+
+
+      const image =
+        product.image ||
+        "https://via.placeholder.com/150";
+
+
+      const name =
+        product.name ||
+        "Sin nombre";
+
+
+      const price =
+        Number(
+          product.price || 0
+        );
+
+
+      card.innerHTML = `
+
+        <img
+          src="${image}"
+          alt="${name}"
+          onerror="
+            this.src=
+            'https://via.placeholder.com/150'
+          "
+        >
+
+
+        <div class="product-title">
+          ${name}
+        </div>
+
+
+        <div class="product-price">
+          $${price.toLocaleString("es-AR")}
+        </div>
+
+
+        <button
+          class="btn-add"
+          data-add="${product.id}"
+        >
+          Agregar al Carrito
+        </button>
+
+
+        ${adminButtons}
+
+      `;
+
+
+      container.appendChild(
+        card
+      );
+
+    }
+  );
+
+
+
+  document
+    .querySelectorAll(
+      "[data-add]"
+    )
+    .forEach(
+
+      btn => {
+
+        btn.addEventListener(
+          "click",
+
+          e =>
+            addToCart(
+              e.target.dataset.add
+            )
+        );
+
+      }
+    );
+
+
+
+  document
+    .querySelectorAll(
+      ".btn-edit"
+    )
+    .forEach(
+
+      btn => {
+
+        btn.addEventListener(
+
+          "click",
+
+          e =>
+            editProduct(
+              e.target.dataset.id
+            )
+
+        );
+
+      }
+    );
+
+
+
+  document
+    .querySelectorAll(
+      ".btn-danger"
+    )
+    .forEach(
+
+      btn => {
+
+        if (
+          btn.dataset.id
+        ) {
+
+          btn.addEventListener(
+
+            "click",
+
+            e =>
+              deleteProduct(
+                e.target.dataset.id
+              )
+
+          );
+
+        }
+
+      }
+    );
+
+}
+
+
+
+/* =========================
+   CARRITO
+========================= */
+
+function addToCart(productId) {
+
+  const itemInCart =
+    cart.find(
+      item =>
+        item.id ===
+        productId
+    );
+
+
+  if (
+    itemInCart
+  ) {
+
+    itemInCart.quantity++;
+
+  } else {
+
+    const product =
+      products.find(
+        p =>
+          p.id ===
+          productId
+      );
+
+
+    if (
+      product
+    ) {
+
+      cart.push({
+
+        ...product,
+
+        quantity: 1
+
+      });
+
+    }
+
+  }
+
+
+  updateCartUI();
+
+}
+
+
+
+function updateCartUI() {
+
+  const cartContainer =
+    document.getElementById(
+      "cart-items"
+    );
+
+
+  const totalContainer =
+    document.getElementById(
+      "cart-total"
+    );
+
+
+  if (
+    cart.length === 0
+  ) {
+
+    cartContainer.innerHTML =
+      "<p>El carrito está vacío.</p>";
+
+
+    totalContainer.textContent =
+      "Total: $0";
+
+
+    return;
+
+  }
+
+
+  cartContainer.innerHTML =
+    "";
+
+
+  let total = 0;
+
+
+  cart.forEach(
+    item => {
+
+      const subtotal =
+        Number(item.price) *
+        item.quantity;
+
+
+      total += subtotal;
+
+
+      cartContainer.innerHTML += `
+
+        <div
+          style="
+            display:flex;
+            justify-content:space-between;
+            margin-bottom:8px;
+          "
+        >
+
+          <div>
+
+            <strong>
+              ${item.name}
+            </strong>
+
+            <br>
+
+            <small>
+
+              $${item.price}
+
+              x
+
+              ${item.quantity}
+
+            </small>
+
+          </div>
+
+
+          <div>
+
+            $${subtotal.toLocaleString("es-AR")}
+
+          </div>
+
+        </div>
+
+      `;
+
+    }
+  );
+
+
+  totalContainer.textContent =
+    "Total: $" +
+    total.toLocaleString(
+      "es-AR"
+    );
+
+}
+
+
+
+/* =========================
+   CHECKOUT
+========================= */
+
+const checkoutModal =
+  document.getElementById(
+    "checkout-modal"
+  );
+
+
+document
+  .getElementById(
+    "open-checkout-btn"
+  )
+  .addEventListener(
+
+    "click",
+
+    () => {
+
+      if (
+        cart.length === 0
+      ) {
+
+        return alert(
+          "El carrito está vacío."
+        );
+
+      }
+
+
+      checkoutModal.style.display =
+        "flex";
+
+    }
+  );
+
+
+document
+  .getElementById(
+    "close-checkout"
+  )
+  .onclick =
+    () =>
+      checkoutModal.style.display =
+        "none";
+
+
+
+document
+  .getElementById(
+    "checkout-form"
+  )
+  .addEventListener(
+
+    "submit",
+
+    e => {
+
+      e.preventDefault();
+
+
+      const name =
+        document
+          .getElementById(
+            "cust-name"
+          )
+          .value;
+
+
+      const address =
+        document
+          .getElementById(
+            "cust-address"
+          )
+          .value;
+
+
+      const payment =
+        document
+          .getElementById(
+            "cust-payment"
+          )
+          .value;
+
+
+      const notes =
+        document
+          .getElementById(
+            "cust-notes"
+          )
+          .value;
+
+
+      let message =
+        `*¡Nuevo Pedido en ${storeConfig.name}!*\n\n`;
+
+
+      message +=
+        `👤 *Cliente:* ${name}\n`;
+
+
+      message +=
+        `📍 *Dirección:* ${address}\n`;
+
+
+      message +=
+        `💳 *Pago:* ${payment}\n`;
+
+
+      if (
+        notes.trim()
+      ) {
+
+        message +=
+          `📝 *Notas:* ${notes}\n`;
+
+      }
+
+
+      message +=
+        "\n*Detalle del pedido:*\n";
+
+
+      let total = 0;
+
+
+      cart.forEach(
+        item => {
+
+          const subtotal =
+            Number(item.price) *
+            item.quantity;
+
+
+          total += subtotal;
+
+
+          message +=
+            `• ${item.name} x${item.quantity} - $${subtotal}\n`;
+
+        }
+      );
+
+
+      message +=
+        `\n*Total a pagar:* $${total}`;
+
+
+      window.open(
+
+        `https://wa.me/${storeConfig.whatsappNumber}?text=${encodeURIComponent(message)}`,
+
+        "_blank"
+
+      );
+
+
+      checkoutModal.style.display =
+        "none";
+
+    }
+  );
+
+
+
+/* =========================
+   GUARDAR PRODUCTO
+========================= */
+
+document
+  .getElementById(
+    "product-form"
+  )
+  .addEventListener(
+
+    "submit",
+
+    async e => {
+
+      e.preventDefault();
+
+
+      if (
+        !currentUser
+      ) {
+
+        return alert(
+          "Debés iniciar sesión."
+        );
+
+      }
+
+
+      const submitBtn =
+        document.getElementById(
+          "prod-submit-btn"
+        );
+
+
+      const id =
+        document
+          .getElementById(
+            "prod-id"
+          )
+          .value ||
+        Date.now()
+          .toString();
+
+
+      const name =
+        document
+          .getElementById(
+            "prod-name"
+          )
+          .value
+          .trim();
+
+
+      const price =
+        parseFloat(
+          document
+            .getElementById(
+              "prod-price"
+            )
+            .value
+        );
+
+
+      const urlInput =
+        document
+          .getElementById(
+            "prod-image"
+          )
+          .value
+          .trim();
+
+
+      const fileInput =
+        document.getElementById(
+          "prod-image-file"
+        );
+
+
+      if (
+        !name ||
+        isNaN(price)
+      ) {
+
+        return alert(
+          "Completá nombre y precio."
+        );
+
+      }
+
+
+      submitBtn.disabled =
+        true;
+
+
+      submitBtn.textContent =
+        "⏳ Guardando...";
+
+
+      try {
+
+        const existingProduct =
+          products.find(
+            p =>
+              p.id === id
+          );
+
+
+        let finalImageUrl =
+          urlInput ||
+          (
+            existingProduct
+              ? existingProduct.image
+              : "https://via.placeholder.com/150"
+          );
+
+
+        if (
+          fileInput.files.length > 0
+        ) {
+
+          const file =
+            fileInput.files[0];
+
+
+          console.log(
+            "📤 Subiendo imagen..."
+          );
+
+
+          const compressedBlob =
+            await compressImageFile(
+              file,
+              400
+            );
+
+
+          const storageRef =
+            ref(
+
+              storage,
+
+              "productos/prod_" +
+              Date.now() +
+              ".jpg"
+
+            );
+
+
+          const snapshot =
+            await uploadBytes(
+              storageRef,
+              compressedBlob
+            );
+
+
+          finalImageUrl =
+            await getDownloadURL(
+              snapshot.ref
+            );
+
+        }
+
+
+        const productData = {
+
+          name,
+
+          price,
+
+          image:
+            finalImageUrl,
+
+          updatedAt:
+            new Date()
+              .toISOString()
+
+        };
+
+
+        console.log(
+          "💾 Guardando producto:",
+          id,
+          productData
+        );
+
+
+        await setDoc(
+
+          doc(
+            db,
+            "productos",
+            id
+          ),
+
+          productData,
+
+          {
+            merge: true
+          }
+
+        );
+
+
+        console.log(
+          "✅ Producto guardado correctamente."
+        );
+
+
+        alert(
+          "✅ Producto guardado correctamente."
+        );
+
+
+        document
+          .getElementById(
+            "admin-modal"
+          )
+          .style.display =
+            "none";
+
+
+        document
+          .getElementById(
+            "product-form"
+          )
+          .reset();
+
+
+        document
+          .getElementById(
+            "prod-id"
+          )
+          .value =
+            "";
+
+
+      } catch (
+        err
+      ) {
+
+        console.error(
+          "❌ ERROR GUARDANDO PRODUCTO:",
+          err
+        );
+
+
+        alert(
+
+          "❌ Error al guardar producto.\n\n" +
+
+          "Código: " +
+          (err.code || "desconocido") +
+
+          "\n\n" +
+
+          err.message
+
+        );
+
+
+      } finally {
+
+        submitBtn.disabled =
+          false;
+
+
+        submitBtn.textContent =
+          "Guardar Producto";
+
+      }
+
+    }
+  );
+
+
+
+/* =========================
+   EDITAR PRODUCTO
+========================= */
+
+function editProduct(id) {
+
+  const prod =
+    products.find(
+      p =>
+        p.id === id
+    );
+
+
+  if (
+    !prod
+  ) {
+
+    return alert(
+      "No se encontró el producto."
+    );
+
+  }
+
+
+  document
+    .getElementById(
+      "prod-id"
+    )
+    .value =
+      prod.id;
+
+
+  document
+    .getElementById(
+      "prod-name"
+    )
+    .value =
+      prod.name ||
+      "";
+
+
+  document
+    .getElementById(
+      "prod-price"
+    )
+    .value =
+      prod.price ||
+      "";
+
+
+  document
+    .getElementById(
+      "prod-image"
+    )
+    .value =
+      prod.image ||
+      "";
+
+
+  document
+    .getElementById(
+      "prod-image-file"
+    )
+    .value =
+      "";
+
+
+  document
+    .getElementById(
+      "admin-modal"
+    )
+    .style.display =
+      "flex";
+
+}
+
+
+
+/* =========================
+   ELIMINAR PRODUCTO
+========================= */
+
+async function deleteProduct(id) {
+
+  if (
+    !confirm(
+      "¿Eliminar este producto?"
+    )
+  ) {
+
+    return;
+
+  }
+
+
+  try {
+
+    await deleteDoc(
+
+      doc(
+        db,
+        "productos",
+        id
+      )
+
+    );
+
+
+    console.log(
+      "🗑️ Producto eliminado:",
+      id
+    );
+
+
+  } catch (
+    error
+  ) {
+
+    console.error(
+      "❌ Error eliminando:",
+      error
+    );
+
+
+    alert(
+
+      "❌ Error al eliminar:\n" +
+
+      error.message
+
+    );
+
+  }
+
+}
+
+
+
+/* =========================
+   MODALES
+========================= */
+
+const loginModal =
+  document.getElementById(
+    "login-modal"
+  );
+
+
+const adminModal =
+  document.getElementById(
+    "admin-modal"
+  );
+
+
+document
+  .getElementById(
+    "open-admin-btn"
+  )
+  .addEventListener(
+
+    "click",
+
+    () => {
+
+      if (
+        currentUser
+      ) {
+
+        document
+          .getElementById(
+            "cfg-name"
+          )
+          .value =
+            storeConfig.name ||
+            "";
+
+
+        document
+          .getElementById(
+            "cfg-logo"
+          )
+          .value =
+            storeConfig.logoUrl ||
+            "";
+
+
+        document
+          .getElementById(
+            "cfg-whatsapp"
+          )
+          .value =
+            storeConfig.whatsappNumber ||
+            "";
+
+
+        adminModal.style.display =
+          "flex";
+
+
+      } else {
+
+        loginModal.style.display =
+          "flex";
+
+      }
+
+    }
+  );
+
+
+document
+  .getElementById(
+    "close-login"
+  )
+  .onclick =
+    () =>
+      loginModal.style.display =
+        "none";
+
+
+document
+  .getElementById(
+    "close-admin"
+  )
+  .onclick =
+    () =>
+      adminModal.style.display =
+        "none";
+
+
+
+/* =========================
+   MODO OSCURO
+========================= */
+
+document
+  .getElementById(
+    "theme-toggle"
+  )
+  .addEventListener(
+
+    "click",
+
+    () => {
+
+      const isDark =
+        document.body.getAttribute(
+          "data-theme"
+        ) ===
+        "dark";
+
+
+      if (
+        isDark
+      ) {
+
+        document.body.removeAttribute(
+          "data-theme"
+        );
+
+
+        document
+          .getElementById(
+            "theme-toggle"
+          )
+          .textContent =
+            "🌙 Modo Oscuro";
+
+
+      } else {
+
+        document.body.setAttribute(
+          "data-theme",
+          "dark"
+        );
+
+
+        document
+          .getElementById(
+            "theme-toggle"
+          )
+          .textContent =
+            "☀️ Modo Claro";
+
+      }
+
+    }
+  );
+
+
+
+/* =========================
+   GUARDAR CONFIGURACIÓN
+========================= */
+
+document
+  .getElementById(
+    "save-cfg-btn"
+  )
+  .addEventListener(
+
+    "click",
+
+    async () => {
+
+      if (
+        !currentUser
+      ) {
+
+        return alert(
+          "Debés iniciar sesión."
+        );
+
+      }
+
+
+      const saveBtn =
+        document.getElementById(
+          "save-cfg-btn"
+        );
+
+
+      const fileInput =
+        document.getElementById(
+          "cfg-logo-file"
+        );
+
+
+      const urlInput =
+        document.getElementById(
+          "cfg-logo"
+        );
+
+
+      const nuevoNombre =
+        document
+          .getElementById(
+            "cfg-name"
+          )
+          .value
+          .trim();
+
+
+      const nuevoWsp =
+        document
+          .getElementById(
+            "cfg-whatsapp"
+          )
+          .value
+          .trim();
+
+
+      const urlManual =
+        urlInput.value
+          .trim();
+
+
+      saveBtn.disabled =
+        true;
+
+
+      saveBtn.textContent =
+        "⏳ Guardando...";
+
+
+      try {
+
+        let logoFinalUrl =
+          urlManual ||
+          storeConfig.logoUrl;
+
+
+        if (
+          fileInput.files.length > 0
+        ) {
+
+          const file =
+            fileInput.files[0];
+
+
+          const compressedBlob =
+            await compressImageFile(
+              file,
+              300
+            );
+
+
+          const storageRef =
+            ref(
+              storage,
+              "logo/logo_tienda.jpg"
+            );
+
+
+          const uploadSnapshot =
+            await uploadBytes(
+              storageRef,
+              compressedBlob
+            );
+
+
+          logoFinalUrl =
+            await getDownloadURL(
+              uploadSnapshot.ref
+            );
+
+        }
+
+
+        const updateData = {
+
+          name:
+            nuevoNombre ||
+            "Plan Frozen",
+
+          whatsappNumber:
+            nuevoWsp,
+
+          logoUrl:
+            logoFinalUrl,
+
+          updatedAt:
+            new Date()
+              .toISOString()
+
+        };
+
+
+        console.log(
+          "💾 Guardando configuración:",
+          updateData
+        );
+
+
+        await setDoc(
+
+          doc(
+            db,
+            "configuracion",
+            "general"
+          ),
+
+          updateData,
+
+          {
+            merge: true
+          }
+
+        );
+
+
+        alert(
+          "✅ Configuración guardada correctamente."
+        );
+
+
+        document
+          .getElementById(
+            "admin-modal"
+          )
+          .style.display =
+            "none";
+
+
+      } catch (
+        err
+      ) {
+
+        console.error(
+          "❌ ERROR CONFIGURACIÓN:",
+          err
+        );
+
+
+        alert(
+
+          "❌ Error al guardar configuración:\n\n" +
+
+          (err.code || "") +
+
+          "\n" +
+
+          err.message
+
+        );
+
+
+      } finally {
+
+        saveBtn.disabled =
+          false;
+
+
+        saveBtn.textContent =
+          "Guardar Configuración";
+
+
+        fileInput.value =
+          "";
+
+      }
+
+    }
+  );
+
+
+
+/* =========================
+   INICIO
+========================= */
+
+function init() {
+
+  console.log(
+    "🚀 Iniciando tienda..."
+  );
+
+
+  initStoreConfigListener();
+
+  initProductsListener();
+
+}
+
+
+init();
+
+</script>
+
 </body>
 </html>
+```
+
