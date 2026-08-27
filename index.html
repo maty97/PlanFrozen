@@ -54,6 +54,7 @@
       transition: opacity 0.2s;
     }
     button:hover { opacity: 0.9; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
 
     .btn-theme { background-color: var(--border-color); color: var(--text-color); }
     .btn-admin { background-color: #333; color: white; }
@@ -612,43 +613,43 @@
       checkoutModal.style.display = 'none';
     });
 
-    // PRODUCTOS
+    // PRODUCTOS CON SUBIDA SINCRÓNICA
     document.getElementById('product-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       if (!currentUser) return alert('Debes iniciar sesión.');
 
+      const submitBtn = document.getElementById('prod-submit-btn');
       const id = document.getElementById('prod-id').value || Date.now().toString();
       const name = document.getElementById('prod-name').value;
       const price = parseFloat(document.getElementById('prod-price').value);
       const urlInput = document.getElementById('prod-image').value.trim();
       const fileInput = document.getElementById('prod-image-file');
 
-      const existingProduct = products.find(p => p.id === id);
-      let initialImageUrl = urlInput || (existingProduct ? existingProduct.image : 'https://via.placeholder.com/150');
-
-      document.getElementById('admin-modal').style.display = 'none';
-      document.getElementById('product-form').reset();
+      submitBtn.disabled = true;
+      submitBtn.textContent = '⏳ Guardando producto...';
 
       try {
-        await setDoc(doc(db, "productos", id), { name, price, image: initialImageUrl });
+        const existingProduct = products.find(p => p.id === id);
+        let finalImageUrl = urlInput || (existingProduct ? existingProduct.image : 'https://via.placeholder.com/150');
 
         if (fileInput.files.length > 0) {
           const file = fileInput.files[0];
-          (async () => {
-            try {
-              const compressedBlob = await compressImageFile(file, 400);
-              const storageRef = ref(storage, 'productos/prod_' + Date.now() + '.jpg');
-              await uploadBytes(storageRef, compressedBlob);
-              const finalStorageUrl = await getDownloadURL(storageRef);
-
-              await updateDoc(doc(db, "productos", id), { image: finalStorageUrl });
-            } catch (storageErr) {
-              console.error("Error al subir la imagen a Storage:", storageErr);
-            }
-          })();
+          const compressedBlob = await compressImageFile(file, 400);
+          const storageRef = ref(storage, 'productos/prod_' + Date.now() + '.jpg');
+          const snapshot = await uploadBytes(storageRef, compressedBlob);
+          finalImageUrl = await getDownloadURL(snapshot.ref);
         }
+
+        await setDoc(doc(db, "productos", id), { name, price, image: finalImageUrl });
+
+        document.getElementById('admin-modal').style.display = 'none';
+        document.getElementById('product-form').reset();
       } catch (err) {
         console.error("Error al guardar producto:", err);
+        alert("❌ Error al guardar producto: " + err.message);
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Guardar Producto';
       }
     });
 
@@ -703,8 +704,9 @@
       }
     });
 
-    // 2. GUARDAR CONFIGURACIÓN (CORREGIDO PARA PERSISTIR LOGO DEFINITIVO)
+    // GUARDAR CONFIGURACIÓN GENERAL (SINCRÓNICO CON STORAGE + FIRESTORE)
     document.getElementById('save-cfg-btn').addEventListener('click', async () => {
+      const saveBtn = document.getElementById('save-cfg-btn');
       const fileInput = document.getElementById('cfg-logo-file');
       const urlInput = document.getElementById('cfg-logo');
 
@@ -712,45 +714,41 @@
       const nuevoWsp = document.getElementById('cfg-whatsapp').value;
       const urlManual = urlInput.value.trim();
 
-      // Cierra el modal al instante
-      document.getElementById('admin-modal').style.display = 'none';
+      saveBtn.disabled = true;
+      saveBtn.textContent = '⏳ Subiendo logo y guardando...';
 
       try {
-        // Actualizamos los campos de texto en Firestore manteniendo el logo actual si no hay una URL explícita nueva
+        let logoFinalUrl = urlManual;
+
+        if (fileInput.files.length > 0) {
+          const file = fileInput.files[0];
+          const compressedBlob = await compressImageFile(file, 300);
+          const storageRef = ref(storage, 'logo/logo_' + Date.now() + '.jpg');
+          const uploadSnapshot = await uploadBytes(storageRef, compressedBlob);
+          logoFinalUrl = await getDownloadURL(uploadSnapshot.ref);
+        }
+
         const updateData = {
           name: nuevoNombre,
           whatsappNumber: nuevoWsp
         };
 
-        if (urlManual) {
-          updateData.logoUrl = urlManual;
+        if (logoFinalUrl) {
+          updateData.logoUrl = logoFinalUrl;
         }
 
-        // Se usa merge: true para no borrar la URL del logo existente mientras se sube el archivo
         await setDoc(doc(db, "configuracion", "general"), updateData, { merge: true });
 
-        // Si hay archivo seleccionado, se sube primero y LUEGO se actualiza Firestore con la URL real de Storage
-        if (fileInput.files.length > 0) {
-          const file = fileInput.files[0];
-          (async () => {
-            try {
-              const compressedBlob = await compressImageFile(file, 300);
-              const storageRef = ref(storage, 'logo/logo_' + Date.now() + '.jpg');
-              
-              await uploadBytes(storageRef, compressedBlob);
-              const uploadedLogoUrl = await getDownloadURL(storageRef);
+        alert('✅ ¡Configuración y logo guardados con éxito!');
+        document.getElementById('admin-modal').style.display = 'none';
 
-              // Actualiza Firestore con la URL pública definitiva
-              await updateDoc(doc(db, "configuracion", "general"), {
-                logoUrl: uploadedLogoUrl
-              });
-            } catch (err) {
-              console.error("Error subiendo el logo a Firebase Storage:", err);
-            }
-          })();
-        }
       } catch (err) {
-        console.error("Error guardando la configuración en Firestore:", err);
+        console.error("Error al guardar la configuración:", err);
+        alert('❌ Ocurrió un error al guardar: ' + err.message);
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Guardar Configuración';
+        fileInput.value = '';
       }
     });
 
