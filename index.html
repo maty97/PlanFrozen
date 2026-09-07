@@ -166,7 +166,8 @@
 
   <header>
     <div class="brand">
-      <img id="store-logo" src="https://via.placeholder.com/45" crossorigin="anonymous" alt="Logo" onerror="this.onerror=null; this.src='https://via.placeholder.com/45'; console.error('Error al renderizar el logo');">
+      <!-- LOGO FIJO: Pegá tu URL de ImgBB o tu código Base64 directamente en src -->
+      <img id="store-logo" src="https://i.postimg.cc/dtHCCxww/Chat-GPT-Image-2026nian8yue25ri-13-00-02.png" alt="Logo Plan Frozen" onerror="this.onerror=null; this.src='https://via.placeholder.com/45';">
       <h1 id="store-name">Plan Frozen</h1>
     </div>
     <div class="controls">
@@ -260,18 +261,6 @@
       </div>
 
       <div class="form-group">
-        <label>Logo del Local:</label>
-        <div style="margin-bottom: 8px;">
-          <small>📁 Subir desde Galería/Archivos:</small>
-          <input type="file" id="cfg-logo-file" accept="image/*">
-        </div>
-        <div>
-          <small>🔗 O pegar URL de imagen:</small>
-          <input type="text" id="cfg-logo" placeholder="https://ejemplo.com/logo.png">
-        </div>
-      </div>
-
-      <div class="form-group">
         <label>WhatsApp (con código de país):</label>
         <input type="text" id="cfg-whatsapp">
       </div>
@@ -334,7 +323,7 @@
     } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
     const firebaseConfig = {
-      apiKey: "AIzaSyBgeGRJYsMLz_QTvPz8TPHyRNCh8Wye6Kk",
+      apiKey: "COLOCAR_ACÁ_TU_API_KEY",
       authDomain: "maria-elena-mendoza.firebaseapp.com",
       projectId: "maria-elena-mendoza",
       storageBucket: "maria-elena-mendoza.appspot.com",
@@ -360,8 +349,7 @@
 
     let storeConfig = {
       name: "Plan Frozen",
-      whatsappNumber: "5491123456789",
-      logoUrl: "https://via.placeholder.com/45"
+      whatsappNumber: "5491123456789"
     };
 
     async function compressImageFile(file, maxDim = 400) {
@@ -389,9 +377,7 @@
         if (docSnap.exists()) {
           storeConfig = docSnap.data();
           document.getElementById('store-name').textContent = storeConfig.name || "Plan Frozen";
-          if (storeConfig.logoUrl) {
-            document.getElementById('store-logo').src = storeConfig.logoUrl;
-          }
+          // Se quitó la actualización del src del logo para mantener el fijado en el HTML.
         }
       }, (error) => {
         console.error("Error al escuchar la configuración global:", error);
@@ -512,7 +498,7 @@
         }
 
         card.innerHTML = `
-          <img src="${product.image || 'https://via.placeholder.com/150'}" crossorigin="anonymous" alt="${product.name}" onerror="this.src='https://via.placeholder.com/150'">
+          <img src="${product.image || 'https://via.placeholder.com/150'}" alt="${product.name}" onerror="this.src='https://via.placeholder.com/150'">
           <div class="product-title">${product.name}</div>
           <div class="product-price">$${product.price}</div>
           <button class="btn-add" data-add="${product.id}">Agregar al Carrito</button>
@@ -677,7 +663,6 @@
     document.getElementById('open-admin-btn').addEventListener('click', () => {
       if (currentUser) {
         document.getElementById('cfg-name').value = storeConfig.name || '';
-        document.getElementById('cfg-logo').value = storeConfig.logoUrl || '';
         document.getElementById('cfg-whatsapp').value = storeConfig.whatsappNumber || '';
         adminModal.style.display = 'flex';
       } else {
@@ -699,52 +684,32 @@
       }
     });
 
-    // SUBIDA SINCRÓNICA CON NOMBRE ÚNICO Y SIN CACHÉ
+    // GUARDAR CONFIGURACIÓN GENERAL (Nombre y WhatsApp)
     document.getElementById('save-cfg-btn').addEventListener('click', async () => {
       const saveBtn = document.getElementById('save-cfg-btn');
-      const fileInput = document.getElementById('cfg-logo-file');
-      const urlInput = document.getElementById('cfg-logo');
-
       const nuevoNombre = document.getElementById('cfg-name').value;
       const nuevoWsp = document.getElementById('cfg-whatsapp').value;
-      const urlManual = urlInput.value.trim();
 
       saveBtn.disabled = true;
-      saveBtn.textContent = '⏳ Subiendo logo...';
+      saveBtn.textContent = '⏳ Guardando...';
 
       try {
-        let logoFinalUrl = urlManual || storeConfig.logoUrl;
-
-        if (fileInput.files.length > 0) {
-          const file = fileInput.files[0];
-          const compressedBlob = await compressImageFile(file, 300);
-          
-          // Genera un archivo nuevo único para invalidar el caché previo
-          const fileName = 'logo_' + Date.now() + '.jpg';
-          const storageRef = ref(storage, 'logo/' + fileName);
-          
-          const uploadSnapshot = await uploadBytes(storageRef, compressedBlob);
-          logoFinalUrl = await getDownloadURL(uploadSnapshot.ref);
-        }
-
         const updateData = {
           name: nuevoNombre,
-          whatsappNumber: nuevoWsp,
-          logoUrl: logoFinalUrl
+          whatsappNumber: nuevoWsp
         };
 
         await setDoc(doc(db, "configuracion", "general"), updateData, { merge: true });
 
-        alert('✅ ¡Logo y configuración guardados exitosamente!');
+        alert('✅ Configuración guardada exitosamente.');
         document.getElementById('admin-modal').style.display = 'none';
 
       } catch (err) {
-        console.error("Error exacto en Firebase:", err);
-        alert('❌ Error al guardar en Firebase:\nCódigo: ' + (err.code || 'Desconocido') + '\nMensaje: ' + err.message);
+        console.error("Error en Firebase:", err);
+        alert('❌ Error al guardar: ' + err.message);
       } finally {
         saveBtn.disabled = false;
         saveBtn.textContent = 'Guardar Configuración';
-        fileInput.value = '';
       }
     });
 
@@ -752,4 +717,3 @@
   </script>
 </body>
 </html>
-
